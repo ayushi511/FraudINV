@@ -1,7 +1,6 @@
 # AI-Powered Agentic Framework for Financial Fraud Detection and Investigation
 
-Final-year B.Tech project — Abhijeeth Narayanan, Ayushi Srivastava, Savita Srivastava
-Dept. of CS & Business Systems, Bharati Vidyapeeth (DU) College of Engineering, Pune
+
 
 Detection models answer *"is this suspicious?"*. This system adds the layer investigators actually need: *"why, what else is connected, and what should happen next?"* A flagged transaction is investigated by four agents that correlate classifier, behavioural and graph evidence, and an LLM turns that evidence into a report in which every claim is mechanically checked against the evidence it cites. A human reviewer always makes the final decision.
 
