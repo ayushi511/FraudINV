@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+fraud.db
+datasets/data/
+artifacts/
+.env
+
+# Python virtual environments and caches
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+
+# Secrets and local configuration
+.env.*
+!.env.example
+
+# Local databases and logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Large generated datasets
+*.parquet
+datasets/data/raw/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

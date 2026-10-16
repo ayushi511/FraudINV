@@ -1,0 +1,75 @@
+erDiagram
+    accounts {
+        string account_id PK
+        integer account_age_days
+        string location
+    }
+    transactions {
+        string transaction_id PK
+        string sender_account
+        string receiver_account
+        float amount
+        datetime timestamp
+        string transaction_type
+        string device_id
+        string ip_address
+        string merchant_id
+        float sender_balance_before
+        float sender_balance_after
+        integer fraud_label
+    }
+    alerts {
+        integer alert_id PK
+        string transaction_id FK
+        float risk_score
+        float anomaly_score
+        float graph_score
+        float fused_risk
+        boolean graph_flag
+        string priority
+        datetime created_at
+    }
+    investigation_cases {
+        string case_id PK
+        integer alert_id FK
+        string status
+        string route
+        float confidence_score
+        json decision_json
+        json graph_json
+        datetime created_at
+    }
+    agent_execution_log {
+        integer log_id PK
+        string case_id FK
+        integer step
+        string agent_name
+        string status
+        float duration_ms
+        json output_json
+        datetime timestamp
+    }
+    evidence {
+        integer evidence_pk PK
+        string evidence_id
+        string case_id FK
+        string evidence_type
+        json content_json
+    }
+    investigation_reports {
+        integer report_id PK
+        string case_id FK
+        json report_json
+        text report_text
+        string narrator
+        json validation_json
+        string recommended_action
+        string reviewer_status
+        text reviewer_note
+        datetime reviewed_at
+    }
+    transactions ||--o{ alerts : "transaction_id"
+    alerts ||--o{ investigation_cases : "alert_id"
+    investigation_cases ||--o{ agent_execution_log : "case_id"
+    investigation_cases ||--o{ evidence : "case_id"
+    investigation_cases ||--o{ investigation_reports : "case_id"

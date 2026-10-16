@@ -1,0 +1,10 @@
+pattern,xgb_hit,fused_hit
+bipartite,0.78,0.78
+cycle,0.833,0.81
+fan_in,0.714,0.714
+fan_out,0.732,0.707
+gather_scatter,0.783,0.812
+laundering_unclassified,0.667,0.667
+random,0.905,0.762
+scatter_gather,0.704,0.722
+stack,0.857,0.857

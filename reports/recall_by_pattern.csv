@@ -1,0 +1,5 @@
+pattern,xgb_hit,fused_hit
+account_takeover,1.0,1.0
+cycle,1.0,1.0
+fan_out,0.818,0.818
+mule_ring,0.673,0.596

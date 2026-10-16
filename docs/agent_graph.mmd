@@ -1,0 +1,25 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	triage(triage)
+	correlate(correlate)
+	supervisor_gate(supervisor_gate)
+	investigate(investigate)
+	supervisor_final(supervisor_final)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> triage;
+	correlate --> supervisor_gate;
+	investigate --> supervisor_final;
+	supervisor_gate -.-> correlate;
+	supervisor_gate -.-> investigate;
+	supervisor_gate -.-> supervisor_final;
+	triage -. &nbsp;end&nbsp; .-> __end__;
+	triage -.-> correlate;
+	supervisor_final --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

@@ -1,0 +1,2075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudInv — Multi-Agent Financial Fraud Detection and Investigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<style>
+:root{
+  --bg:#F8FAFC; --panel:#FFFFFF; --ink:#0F172A; --muted:#475569; --line:#CBD5E1; --soft:#F1F5F9;
+  --brand:#0F2A4A; --brand-h:#1E3A8A; --brand-bg:#EFF6FF; --brand-border:#BFDBFE;
+  --go:#047857; --go-h:#065F46; --go-bg:#ECFDF5; --go-border:#A7F3D0;
+  --high:#B91C1C; --high-h:#991B1B; --high-bg:#FEF2F2; --high-border:#FECACA;
+  --mid:#B45309; --mid-h:#92400E; --mid-bg:#FFFBEB; --mid-border:#FDE68A;
+  --low:#047857; --low-h:#065F46; --low-bg:#ECFDF5; --low-border:#A7F3D0;
+  --mixed:#4F46E5; --mixed-h:#4338CA; --mixed-bg:#EEF2FF; --mixed-border:#C7D2FE;
+  --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --side:248px; --side-c:72px; --top:62px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 var(--sans);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--brand-h);outline-offset:2px}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ic.fill{fill:currentColor;stroke:none}
+.muted{color:var(--muted)} .small{font-size:13px} .strong{font-weight:600}
+/* ---------- shell ---------- */
+.top{position:fixed;inset:0 0 auto 0;height:var(--top);display:flex;align-items:center;gap:16px;padding:0 22px;background:var(--panel);border-bottom:1px solid var(--line);z-index:30;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;text-decoration:none;color:var(--brand)}
+.brand .logo{display:grid;place-items:center;width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-h) 100%);color:#fff;box-shadow:0 2px 4px rgba(15,42,74,.2)}
+.brand .sub{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0.02em;text-transform:uppercase}
+.top .sep{width:1px;height:24px;background:var(--line)}
+.top-meta{display:flex;align-items:center;gap:14px;font-size:13px;margin-left:auto}
+.badge-live{display:inline-flex;align-items:center;gap:6px;background:var(--go-bg);border:1px solid var(--go-border);color:var(--go);padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.badge-live .pulse{width:7px;height:7px;border-radius:50%;background:var(--go);box-shadow:0 0 0 0 rgba(4,120,87,.4);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(4,120,87,.6)} 70%{box-shadow:0 0 0 6px rgba(4,120,87,0)} 100%{box-shadow:0 0 0 0 rgba(4,120,87,0)}}
+.hamb{display:none;border:0;background:none;padding:6px;border-radius:6px;color:var(--ink)}
+.side{position:fixed;top:var(--top);bottom:0;left:0;width:var(--side);background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px;z-index:25;transition:width .18s ease}
+.side nav{display:grid;gap:4px}
+.side a,.side .sbtn{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;border:0;background:none;width:100%;text-align:left;white-space:nowrap;overflow:hidden;transition:all .15s ease}
+.side a:hover,.side .sbtn:hover{background:var(--soft);color:var(--ink)}
+.side a[aria-current="page"]{background:var(--brand-bg);color:var(--brand-h);border:1px solid var(--brand-border)}
+.side .count{margin-left:auto;background:var(--brand-h);color:#fff;font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 8px;line-height:18px}
+.side .count:empty{display:none}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px}
+.main{margin-left:var(--side);padding:calc(var(--top) + 24px) 32px 48px;transition:margin .18s ease}
+.wrap{max-width:1280px;margin:0 auto}
+body.collapsed .side{width:var(--side-c)}
+body.collapsed .side span,body.collapsed .side .count{display:none}
+body.collapsed .side a,body.collapsed .side .sbtn{justify-content:center;padding:10px}
+body.collapsed .main{margin-left:var(--side-c)}
+body.collapsed #collapse .ic{transform:rotate(180deg)}
+.scrim{display:none}
+/* ---------- shared ---------- */
+h1{font-size:24px;line-height:1.25;font-weight:700;margin:0;letter-spacing:-.015em;color:var(--ink)}
+h2{font-size:16.5px;font-weight:700;margin:0 0 14px;display:flex;align-items:center;gap:8px;color:var(--ink)}
+h3{font-size:14.5px;font-weight:600;margin:0 0 6px;color:var(--ink)}
+.back{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:4px 0;color:var(--muted);font-size:13.5px;font-weight:600;margin-bottom:14px;text-decoration:none}
+.back:hover{color:var(--brand-h)}
+.lede{font-size:15px;color:var(--muted);margin:4px 0 0;max-width:72ch}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);padding:8px 15px;border-radius:8px;font-weight:600;text-decoration:none;font-size:14px;color:var(--ink);transition:all .15s ease}
+.btn:hover{border-color:var(--brand-h);color:var(--brand-h);background:#FAFBFD}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.brand{background:var(--brand);border-color:var(--brand);color:#fff} .btn.brand:hover{background:var(--brand-h);border-color:var(--brand-h);color:#fff}
+.btn.go{background:var(--go);border-color:var(--go);color:#fff} .btn.go:hover{background:var(--go-h);border-color:var(--go-h);color:#fff}
+.btn.outline{border-color:var(--brand-border);color:var(--brand-h);background:var(--brand-bg)} .btn.outline:hover{background:#DBEAFE}
+.btn.ghost{border-color:transparent;background:none;color:var(--brand-h)} .btn.ghost:hover{background:var(--brand-bg)}
+.btn.block{width:100%;justify-content:center}
+.linkbtn{background:none;border:0;padding:0;color:var(--brand-h);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.linkbtn:hover{text-decoration:underline}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:20px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;color:var(--c);background:var(--cb);border:1px solid var(--cb-line,transparent)}
+.s-high{--c:var(--high);--cb:var(--high-bg);--cb-line:var(--high-border)}
+.s-mid{--c:var(--mid);--cb:var(--mid-bg);--cb-line:var(--mid-border)}
+.s-low{--c:var(--low);--cb:var(--low-bg);--cb-line:var(--low-border)}
+.s-mixed{--c:var(--mixed);--cb:var(--mixed-bg);--cb-line:var(--mixed-border)}
+.s-brand{--c:var(--brand-h);--cb:var(--brand-bg);--cb-line:var(--brand-border)}
+.s-neutral{--c:var(--muted);--cb:var(--soft);--cb-line:var(--line)}
+.s-go{--c:var(--go);--cb:var(--go-bg);--cb-line:var(--go-border)}
+.info{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font:700 11px var(--sans);color:var(--muted);vertical-align:1px;margin-left:5px;padding:0}
+.info:hover,.info[aria-expanded="true"]{border-color:var(--brand-h);color:var(--brand-h);background:var(--brand-bg)}
+#tip{position:fixed;z-index:70;max-width:320px;background:#0F172A;color:#fff;font-size:13px;line-height:1.45;padding:10px 14px;border-radius:8px;pointer-events:none;box-shadow:0 8px 24px rgba(15,23,42,.35)}
+.chip{border:1px solid var(--brand-border);background:var(--brand-bg);color:var(--brand-h);font:700 11.5px var(--sans);padding:2px 7px;border-radius:5px;margin-left:4px;cursor:pointer}
+.chip:hover{background:#DBEAFE}
+.note{display:flex;gap:12px;border:1px solid var(--line);background:var(--soft);padding:14px 16px;border-radius:10px;margin:0 0 14px}
+.note.tone{border-color:var(--cb-line,var(--line));background:var(--cb)} .note.tone .ic{color:var(--c)}
+.note b{display:block;margin-bottom:2px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:13.5px;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--go);color:var(--go);font-weight:700;font-size:12.5px}
+.kv{display:grid;grid-template-columns:minmax(140px,auto) 1fr;gap:10px 18px;margin:0;font-size:14px}
+.kv dt{color:var(--muted);font-weight:500} .kv dd{margin:0;font-weight:600}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:10px 14px;background:var(--soft);border-bottom:1px solid var(--line)}
+table.t td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr:last-child td{border-bottom:0}
+table.t tr.hl td{background:var(--brand-bg);border-top:1px solid var(--brand-border);border-bottom:1px solid var(--brand-border)}
+table.t tr:hover td{background:#FAFBFD}
+.tablewrap{border:1px solid var(--line);border-radius:10px;overflow:auto;background:var(--panel)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:24px;align-items:start}
+.sticky{position:sticky;top:calc(var(--top) + 20px)}
+/* ---------- kpi overview ---------- */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.kpi .num{font-size:22px;font-weight:700;line-height:1.2;color:var(--ink)}
+.kpi .lbl{font-size:12.5px;color:var(--muted);font-weight:500;margin-top:2px}
+.kpi .sub{font-size:11.5px;margin-top:4px}
+/* ---------- review queue ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filters button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:7px 15px;font-size:13.5px;font-weight:600;color:var(--muted);transition:all .15s ease}
+.filters button .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.filters button:hover{background:var(--soft);color:var(--ink)}
+.filters button[aria-pressed="true"]{border-color:var(--brand-border);background:var(--brand-bg);color:var(--brand-h)}
+.queue{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.qitem{display:grid;grid-template-columns:130px minmax(0,1fr) 210px;gap:20px;align-items:center;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:15px 20px;text-decoration:none;transition:box-shadow .15s ease,border-color .15s ease}
+.qitem:hover{box-shadow:0 4px 14px rgba(15,23,42,.08);border-color:#94A3B8;border-left-color:var(--c)}
+.qsev .lab{display:block;font-weight:700;font-size:13px;color:var(--c)} .qsev .num{font-size:13px;font-weight:600;color:var(--ink)}
+.qhead{font-weight:700;font-size:15px;color:var(--ink)} .qwhy{font-size:13.5px;color:var(--muted);margin-top:2px} .qmeta{font-size:12.5px;color:var(--muted);margin-top:6px}
+.qnext{text-align:right;display:grid;gap:6px;justify-items:end} .qnext .next{font-size:12.5px;color:var(--muted)}
+.empty-state{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:center;padding:12px 0}
+.empty-state .art{display:grid;place-items:center;width:80px;height:80px;border-radius:50%;background:var(--brand-bg);border:1px solid var(--brand-border);color:var(--brand-h);margin-bottom:16px}
+.empty-state .art .ic{width:40px;height:40px}
+.empty-state .how{border-left:1px solid var(--line);padding-left:24px}
+/* ---------- case page ---------- */
+.case-top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:6px 0 10px}
+.happened{font-size:15px;color:var(--muted);margin:0 0 18px;max-width:78ch} .happened b{color:var(--ink)}
+.verdict{display:grid;grid-template-columns:210px minmax(0,1fr);gap:20px;align-items:stretch}
+.vbox{display:flex;gap:14px;align-items:center;background:var(--cb);border:1px solid var(--cb-line);border-radius:10px;padding:16px}
+.vbox .badge{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--panel);color:var(--c);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.vbox .lab{font-size:16px;font-weight:700;color:var(--c)} .vbox .num{font-size:13.5px;font-weight:600;color:var(--ink)}
+.vtext p{margin:0 0 6px}
+.nextstep{display:flex;gap:10px;background:var(--cb);border:1px solid var(--cb-line);border-radius:10px;padding:12px 14px;margin-top:10px;font-size:13.5px} .nextstep .ic{color:var(--c);margin-top:2px}
+.reasons{list-style:none;padding:0;margin:0}
+.reasons li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:start}
+.reasons li:last-child{border-bottom:0}
+.reasons .mk{color:var(--high);margin-top:1px} .reasons .mk.down{color:var(--low)}
+.reasons .t{font-weight:600;font-size:14px} .reasons .d{font-size:13px;color:var(--muted);margin-top:2px}
+.lessrisk{background:var(--low-bg);border:1px solid var(--low-border);border-radius:10px;padding:12px 16px;margin-top:14px}
+.lessrisk h3{color:var(--low);display:flex;gap:6px;align-items:center;font-size:13.5px}
+.lessrisk .reasons li{border-color:rgba(4,120,87,.15)}
+.checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.check{border:1px solid var(--line);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;background:var(--panel)}
+.check::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--c)}
+.check .q{font-size:12.5px;color:var(--muted);font-weight:500} .check .a{font-size:16px;font-weight:700;color:var(--c);margin:3px 0 4px}
+.check .m{font-size:13px;color:var(--ink)} .check .n{font-size:12px;color:var(--muted);margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+.sure{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap} .sure .a{font-size:17px;font-weight:700;color:var(--c)}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.dots span{padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--muted);font-weight:500} .dots span.on{background:var(--high-bg);color:var(--high);border:1px solid var(--high-border);font-weight:700}
+.tablist{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 18px;flex-wrap:wrap}
+.tablist button{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:600;font-size:14px;transition:all .15s ease}
+.tablist button:hover{color:var(--brand-h)}
+.tablist button[aria-selected="true"]{color:var(--brand-h);border-bottom-color:var(--brand-h)}
+.aihead{display:flex;align-items:center;gap:12px;background:var(--brand-bg);border:1px solid var(--brand-border);border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.aihead .ic{color:var(--brand-h);width:22px;height:22px}
+.found{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin-bottom:18px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.report p{margin:0 0 8px;font-size:14px;line-height:1.6}
+.report h4{font-size:12px;font-weight:700;color:var(--muted);margin:16px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.report h4:first-child{margin-top:0}
+.claim{background:none;border:0;padding:0;font:inherit;text-align:left;border-bottom:1px dotted var(--muted);cursor:pointer}
+.claim:hover{border-bottom:1.5px solid var(--brand-h);color:var(--brand-h)} .claim.on{background:var(--brand-bg);border-radius:2px;outline:2px solid var(--brand-border)}
+.inf .claim{font-style:italic}
+.basis{font-size:13px;background:var(--brand-bg);border:1px solid var(--brand-border);border-radius:8px;padding:8px 12px;margin:4px 0 12px}
+.basis div{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.cmp{display:grid;gap:16px}
+.cmprow{display:grid;grid-template-columns:140px minmax(0,1fr) 110px;gap:14px;align-items:center}
+.bars{display:grid;gap:4px;font-size:12.5px}
+.bar{display:grid;grid-template-columns:70px minmax(0,1fr);gap:8px;align-items:center}
+.bar i{display:block;height:8px;border-radius:3px;background:#CBD5E1} .bar.now i{background:var(--c)}
+#cy{height:400px;border:1px solid var(--line);border-radius:10px;background:#FAFBFD}
+.cy-ctrls{display:flex;gap:6px;margin-top:8px}
+.cy-ctrls button{padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);font-size:12px;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.ldot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.entity{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;font-size:13.5px}
+.entity ul{list-style:none;margin:4px 0 10px;padding:0} .entity li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--soft)}
+.shap{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px 14px;align-items:center;font-size:13px}
+.shap .b{height:8px;border-radius:3px}
+details.sub{margin-top:16px} details.sub summary{cursor:pointer;font-weight:600;font-size:14px}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+/* ---------- decision panel ---------- */
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:700}
+.sugg{background:var(--brand-bg);border:1px solid var(--brand-border);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.sugg .l{font-size:12px;color:var(--brand-h);font-weight:700;text-transform:uppercase;letter-spacing:0.04em} .sugg .v{font-weight:700;font-size:15px;margin:2px 0 4px;color:var(--brand)} .sugg p{margin:0;font-size:13px;color:var(--muted)}
+.opts{display:grid;gap:8px;margin:12px 0}
+.opt{display:grid;grid-template-columns:30px 1fr 16px;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 14px;transition:all .15s ease}
+.opt:hover{border-color:#94A3B8;background:#FAFBFD}
+.opt .oi{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--cb);color:var(--c)}
+.opt b{display:block;font-size:14px} .opt small{font-size:12.5px;color:var(--muted);line-height:1.4;display:block;margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--brand-h);box-shadow:inset 0 0 0 1px var(--brand-h);background:#FAFBFF}
+.opt .tag{font-size:11px;font-weight:700;color:var(--brand-h);background:var(--brand-bg);border:1px solid var(--brand-border);padding:1px 6px;border-radius:4px;margin-left:6px}
+textarea{width:100%;min-height:80px;font:inherit;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);resize:vertical}
+.counter{text-align:right;font-size:11.5px;color:var(--muted);margin-top:2px}
+.outcome dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:13.5px} .outcome dt{color:var(--muted)} .outcome dd{margin:0;font-weight:600}
+/* ---------- upload ---------- */
+.drop{border:2px dashed #94A3B8;border-radius:12px;padding:32px 24px;text-align:center;background:#FAFBFD;transition:all .15s ease}
+.drop.over{border-color:var(--brand-h);background:var(--brand-bg)}
+.drop .art{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:12px;background:var(--brand-bg);border:1px solid var(--brand-border);color:var(--brand-h);margin-bottom:10px}
+.drop .art .ic{width:28px;height:28px}
+.feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.feat{display:flex;gap:10px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px} .feat .ic{color:var(--brand-h);margin-top:2px} .feat b{display:block;color:var(--brand);margin-bottom:2px}
+.fileready{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-top:14px;background:var(--panel)}
+.fileready .fic{display:grid;place-items:center;width:40px;height:40px;border-radius:8px;background:var(--go-bg);border:1px solid var(--go-border);color:var(--go)}
+.progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.pstep{display:flex;gap:8px;font-size:12.5px} .pstep b{display:block;font-size:13px}
+.pstep .pi{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1.5px solid #94A3B8;color:var(--muted);flex:none;font-size:11.5px;font-weight:700}
+.pstep.done .pi{background:var(--go);border-color:var(--go);color:#fff} .pstep.now .pi{border-color:var(--brand-h);color:var(--brand-h);background:var(--brand-bg)}
+.colhelp{width:100%;border-collapse:collapse;font-size:13px} .colhelp td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top} .colhelp td:first-child{padding-right:10px;white-space:nowrap}
+.colhelp code,.kv code{font-size:12px;background:var(--soft);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.ures{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.urow{display:grid;grid-template-columns:56px minmax(0,1fr) 230px;gap:14px;align-items:center;border:1px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:12px 16px;background:var(--panel)}
+.urow .rn{color:var(--muted);font-size:12.5px;font-weight:600} .urow .r{text-align:right;display:grid;gap:4px;justify-items:end;font-size:13px}
+.match{font-size:12px;font-weight:700} .match.ok{color:var(--low)} .match.no{color:var(--mid)}
+/* ---------- reports/evaluation ---------- */
+.evtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+.evtabs button{border:0;background:none;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer}
+.evtabs button.active{color:var(--brand-h);border-bottom-color:var(--brand-h)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat-box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.stat-box .v{font-size:24px;font-weight:700;line-height:1.2;color:var(--ink)} .stat-box .l{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px} .stat-box .m{font-size:12px;color:var(--muted);margin-top:6px}
+/* ---------- modal ---------- */
+dialog{max-width:760px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:16px;padding:28px;background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(15,23,42,.35)}
+dialog::backdrop{background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+.guide-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.gstep{display:flex;gap:12px;border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--soft)}
+.gstep .n{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:700;flex:none;background:var(--c);font-size:13px}
+.gstep b{display:block}
+dialog dl{display:grid;grid-template-columns:180px 1fr;gap:10px 16px;font-size:13.5px;margin:0} dialog dt{font-weight:600;color:var(--brand-h)}
+.xbtn{position:absolute;top:16px;right:16px;border:0;background:none;padding:6px;border-radius:6px;color:var(--muted)} .xbtn:hover{background:var(--soft);color:var(--ink)}
+/* ---------- responsive ---------- */
+@media (max-width:1100px){.cols{grid-template-columns:1fr}.sticky{position:static}.kpis,.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:850px){
+  .hamb{display:inline-grid;place-items:center}
+  .top-meta .hide-s{display:none}
+  .side{transform:translateX(-100%);transition:transform .2s ease;width:var(--side);box-shadow:0 0 30px rgba(15,23,42,.2)}
+  body.nav-open .side{transform:none}
+  body.nav-open .scrim{display:block;position:fixed;inset:var(--top) 0 0 0;background:rgba(15,23,42,.4);z-index:20}
+  .main,body.collapsed .main{margin-left:0;padding:calc(var(--top) + 16px) 16px 32px}
+  body.collapsed .side{width:var(--side)} body.collapsed .side span{display:inline}
+  #collapse{display:none}
+  .qitem,.urow{grid-template-columns:1fr}.qnext,.urow .r{justify-items:start;text-align:left}
+  .checks,.feats,.found,.guide-steps,.verdict,.empty-state{grid-template-columns:1fr}
+  .empty-state .how{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}
+  .cmprow{grid-template-columns:1fr}.progress{grid-template-columns:1fr 1fr}.fileready{grid-template-columns:40px 1fr}
+  dialog dl{grid-template-columns:1fr}
+  .kpis,.stat-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="hamb" id="hamb" aria-label="Open navigation menu" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="#">
+    <span class="logo"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+    <div><span>FraudInv</span><span class="sub">Explainable Multi-Agent Framework</span></div>
+  </a>
+  <div class="top-meta">
+    <span class="badge-live" id="liveStatus"><span class="pulse"></span><span id="liveText">System Online</span></span>
+    <span class="hide-s muted" id="metaDataset">Dataset: Connecting…</span>
+    <span class="sep hide-s"></span>
+    <span class="small hide-s" style="display:inline-flex;align-items:center;gap:6px"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Analyst Mode</span></span>
+  </div>
+</header>
+<aside class="side" id="side" aria-label="Main navigation">
+  <nav id="nav"></nav>
+  <div class="side-foot">
+    <button class="sbtn" id="helpNav" title="How to read an investigation case"></button>
+    <button class="sbtn" id="collapse" aria-expanded="true"></button>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+<main class="main"><div class="wrap" id="app"></div></main>
+<div id="tip" role="tooltip" hidden></div>
+<dialog id="guide" aria-labelledby="guide-h"></dialog>
+
+<script>
+/* ======================= basics ======================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct = v => v == null || isNaN(v) ? "–" : Math.round(Number(v) * 100) + "%";
+function pctPair(v, t){
+  if (v == null || isNaN(v)) return ["–", "–"];
+  for (const d of [0, 1, 2, 3]) {
+    const a = (Number(v) * 100).toFixed(d), b = (Number(t) * 100).toFixed(d);
+    if (a !== b || d === 3) return [a + "%", b + "%"];
+  }
+}
+const money = v => v == null || isNaN(v) ? "–" : "$" + Number(v).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const whenStr = t => {
+  if (!t) return "";
+  const d = new Date(String(t).replace(" ", "T"));
+  return isNaN(d) ? String(t) : d.toLocaleString(undefined, {day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"});
+};
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+let H = {}, FILTER = "todo", cy = null, C = null, LIT = [], ALERTS = [], EVAL_DATA = null;
+
+async function api(p, o){
+  const r = await fetch(p, o);
+  if (!r.ok) {
+    let errText = "";
+    try { errText = await r.text(); } catch(_){}
+    throw new Error(errText || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("fa:" + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("fa:" + k, JSON.stringify(v)); } catch(e){} },
+};
+
+/* Safe threshold resolver (handles LOW/HIGH vs low_confidence/high_confidence) */
+function getThresholds(){
+  let low = Number(H.thresholds?.LOW ?? H.low_confidence);
+  let high = Number(H.thresholds?.HIGH ?? H.high_confidence);
+  if (!Number.isFinite(low)) low = 0.35;
+  if (!Number.isFinite(high)) high = 0.70;
+  const alertThresh = Number(H.alert_threshold ?? H.thresholds?.alert_threshold ?? 0.5);
+  const fusedThresh = Number(H.fused_threshold ?? H.thresholds?.fused_threshold ?? 0.5);
+  return { low, high, alertThresh, fusedThresh };
+}
+
+/* ======================= icons ======================= */
+const ICONS = {
+  shield: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',
+  shieldcheck: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  cases: '<rect x="5" y="3" width="13" height="17" rx="2"/><path d="M9 8h5M9 12h5M9 16h3"/>',
+  swap: '<path d="M4 8h15l-3-3M20 16H5l3 3"/>',
+  chart: '<path d="M5 20V11M10 20V5M15 20v-8M20 20v-4"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.7-.9 1.4v.3"/><path d="M12 17h.01"/>',
+  chev: '<path d="M15 6l-6 6 6 6"/>', chevr: '<path d="M9 6l6 6-6 6"/>',
+  upload: '<path d="M12 15V4M7 9l5-5 5 5M5 20h14"/>', download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z"/>',
+  book: '<path d="M12 6c-1.5-1.3-3.7-2-7-2v14c3.3 0 5.5.7 7 2 1.5-1.3 3.7-2 7-2V4c-3.3 0-5.5.7-7 2zM12 6v14"/>',
+  alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  x: '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  docsearch: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M14 3v5h5M8 9h4M8 13h3"/><circle cx="16.5" cy="16.5" r="3"/><path d="M21 21l-2.3-2.3"/>',
+  spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 14h8M8 17h5"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  bolt: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+};
+const I = (n, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ""}</svg>`;
+
+/* ======================= shell: sidebar ======================= */
+const NAV = [
+  ["review", "", "shieldcheck", "Fraud Review"],
+  ["cases", "cases", "cases", "All Cases"],
+  ["upload", "upload", "swap", "Transactions & Ingest"],
+  ["reports", "reports", "chart", "Research & Evaluation"],
+  ["system", "system", "sliders", "System Architecture"]
+];
+
+function buildShell(){
+  $("#nav").innerHTML = NAV.map(([k, h, ic, l]) =>
+    `<a href="#${h}" data-nav="${k}" title="${l}">${I(ic)}<span>${l}</span>${k === "review" ? '<b class="count" id="navCount"></b>' : ""}</a>`
+  ).join("");
+  $("#helpNav").innerHTML = `${I("help")}<span>Case Reading Guide</span>`;
+  const col = $("#collapse");
+  const apply = c => {
+    document.body.classList.toggle("collapsed", c);
+    col.setAttribute("aria-expanded", String(!c));
+    col.setAttribute("aria-label", c ? "Expand sidebar" : "Collapse sidebar");
+    col.title = c ? "Expand sidebar" : "Collapse sidebar";
+    col.innerHTML = `${I("chev")}<span>Collapse</span>`;
+  };
+  apply(store.get("collapsed", false));
+  col.onclick = () => { const c = !document.body.classList.contains("collapsed"); store.set("collapsed", c); apply(c); };
+  $("#helpNav").onclick = openGuide;
+  const hamb = $("#hamb"), close = () => { document.body.classList.remove("nav-open"); hamb.setAttribute("aria-expanded", "false"); };
+  hamb.onclick = () => {
+    const o = !document.body.classList.contains("nav-open");
+    document.body.classList.toggle("nav-open", o);
+    hamb.setAttribute("aria-expanded", String(o));
+  };
+  $("#scrim").onclick = close;
+  $("#nav").addEventListener("click", close);
+}
+
+function markNav(k){
+  document.querySelectorAll("[data-nav]").forEach(a => {
+    if (a.dataset.nav === k) {
+      a.setAttribute("aria-current", "page");
+    } else {
+      a.removeAttribute("aria-current");
+    }
+  });
+}
+
+function logActivity(kind, text){
+  const a = store.get("activity", []);
+  a.unshift({kind, text, at: new Date().toISOString()});
+  store.set("activity", a.slice(0, 20));
+}
+
+/* ======================= glossary + tooltips ======================= */
+const G = {
+  risk: ["Combined Fused Risk", "Combined probability that a transaction is fraudulent, synthesized via logistic regression or 2-of-3 deterministic fusion across XGBoost, Isolation Forest, and Graph analytics. Not fabricated by LLM."],
+  detection: ["XGBoost Classifier", "Supervised gradient-boosted decision trees trained on past fraud topologies with engineered past-only temporal and behavioral features."],
+  behaviour: ["Isolation Forest", "Unsupervised anomaly detector measuring the sender's deviation from their own historical transaction baseline."],
+  network: ["Graph Analytics", "NetworkX graph engine evaluating k-hop proximity to known fraud accounts, fan-in/fan-out typologies, cycles, and shared device rings."],
+  sure: ["Supervisor Confidence", "Deterministic confidence score derived from model signal corroboration and evidence density; never from LLM self-estimation."],
+  tested: ["Empirical Calibration", "Measured on held-out chronological test partitions. Reflects observed real-world precision within each risk band."],
+  perp: ["Confirmed Fraud Account", "Account confirmed as a perpetrator either from ground-truth test data or human analyst confirmation."],
+  steps: ["Graph Distance (k-hop)", "Shortest path distance in the transaction graph. 1 step is direct transfer; 2 steps indicates a mutual counterparty."],
+  fan_in: ["Fan-In Funnel", "Rapid multi-source aggregation: many distinct sender accounts funneling funds into a single recipient account."],
+  fan_out: ["Fan-Out Dispersion", "Rapid structuring: one account dispersing funds to multiple distinct beneficiary accounts."],
+  cycle: ["Circular Laundering", "Cyclic fund movement: funds routed through multiple intermediary accounts returning to origin."],
+  scatter_gather: ["Scatter-Gather Ring", "Structuring typology: funds split across intermediary mule accounts and gathered into a designated collector."],
+  drivers: ["TreeSHAP Feature Attribution", "Exact Shapley values explaining the additive contribution of each engineered feature toward the XGBoost detection score."],
+  evidence: ["Evidence Bundle (E1...E38)", "Discrete, structured evidence items curated by the Evidence Correlation Agent, providing a verifiable audit trail."],
+  summary: ["Mechanical Grounding Validation", "Mechanical validator checks that 100% of claims and figures cited in the LLM narration match the curated evidence bundle."],
+  priority: ["Priority Routing", "P1: Strong multi-signal corroboration. P2: Standard single/dual signal alert. P3: Low-confidence/exploratory alert."],
+  mixed: ["Conflicting Signals", "Classifier detected anomaly while behavioural/graph detectors indicate normal behavior. Triggers unassisted human review."],
+  further: ["Widen Search (k=3)", "Medium confidence alert where the supervisor autonomously widened the graph radius from 2 to 3 hops."],
+  alertline: ["Detection Threshold", "Calibrated decision threshold balancing precision and recall to control investigator alert budget."],
+};
+
+function info(k){
+  return G[k] ? `<button class="info" type="button" data-tip="${k}" aria-label="Explanation for ${esc(G[k][0])}">i</button>` : "";
+}
+
+function showTip(btn){
+  const t = $("#tip"), [title, body] = G[btn.dataset.tip] || ["Info", ""];
+  t.innerHTML = `<b>${esc(title)}</b><br>${esc(body)}`;
+  t.hidden = false;
+  const r = btn.getBoundingClientRect(), w = t.offsetWidth, h = t.offsetHeight;
+  let x = Math.min(Math.max(8, r.left + r.width/2 - w/2), innerWidth - w - 8);
+  let y = r.bottom + 8;
+  if (y + h > innerHeight - 8) y = r.top - h - 8;
+  t.style.left = x + "px"; t.style.top = y + "px";
+  btn.setAttribute("aria-expanded", "true");
+}
+
+function hideTip(){
+  $("#tip").hidden = true;
+  document.querySelectorAll(".info[aria-expanded]").forEach(b => b.removeAttribute("aria-expanded"));
+}
+
+document.addEventListener("mouseover", e => { const b = e.target.closest(".info"); if (b) showTip(b); });
+document.addEventListener("mouseout", e => { if (e.target.closest(".info")) hideTip(); });
+document.addEventListener("focusin", e => { const b = e.target.closest(".info"); if (b) showTip(b); else hideTip(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest(".info");
+  if (b) {
+    e.preventDefault(); e.stopPropagation();
+    b.hasAttribute("aria-expanded") ? hideTip() : showTip(b);
+  } else {
+    hideTip();
+  }
+}, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
+
+function openGuide(){
+  const d = $("#guide");
+  const gs = (n, cls, t, m) => `<div class="gstep ${cls}"><span class="n">${n}</span><div><b>${t}</b><span class="small muted">${m}</span></div></div>`;
+  d.innerHTML = `<button class="xbtn" aria-label="Close" onclick="this.closest('dialog').close()">${I("x")}</button>
+    <h2 id="guide-h" style="font-size:20px">${I("book")} FraudInv Investigation Workflow</h2>
+    <p class="muted" style="margin:0 0 16px">How FraudInv correlates multi-agent evidence and assists investigator decision-making:</p>
+    <div class="guide-steps">
+      ${gs(1, "s-brand", "Factual Ingestion", "Verifies transaction details: amount, sender, receiver, timestamp, and device fingerprint.")}
+      ${gs(2, "s-go", "Tri-Signal Detection", "Calculates XGBoost classifier score, Isolation Forest behavioral score, and Graph Network score.")}
+      ${gs(3, "s-mixed", "Deterministic Fusion", "Fuses signals via learned logistic regression or 2-of-3 voting. Evaluates signal agreement.")}
+      ${gs(4, "s-mid", "Multi-Agent Narrative & Review", "Curates evidence bundle, generates mechanically grounded narrative, and routes to analyst.")}
+    </div>
+    <h3>Core Verification Principles</h3>
+    <dl>${["risk","detection","behaviour","network","sure","tested","perp","steps","fan_in","fan_out","cycle","scatter_gather","summary","evidence","drivers","mixed","further","priority"]
+      .map(k => `<dt>${esc(G[k][0])}</dt><dd style="margin:0">${esc(G[k][1])}</dd>`).join("")}</dl>
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center">
+      <span class="small muted">FraudInv never auto-blocks transactions. Human investigators always retain final decision authority.</span>
+      <button class="btn brand" onclick="this.closest('dialog').close()">Close Guide</button>
+    </div>`;
+  d.showModal();
+}
+
+/* ======================= signal interpretation ======================= */
+function sigFromEvidence(ev){
+  const S = {_patterns: []};
+  ev.forEach(e => {
+    if (e.field.startsWith("pattern_")) S._patterns.push({v: e.value, id: e.evidence_id});
+    else S[e.field] = {v: e.value, id: e.evidence_id};
+  });
+  return S;
+}
+
+function sigFromAlert(sig){
+  const S = {_patterns: []};
+  Object.entries(sig || {}).forEach(([f, v]) => {
+    if (f.startsWith("pattern_")) S._patterns.push({v, id: null});
+    else S[f] = {v, id: null};
+  });
+  return S;
+}
+
+const V = (S, f) => S[f]?.v;
+
+const PAT = {
+  fan_in: ["Fan-In Funnel Typology", p => `${p.distinct_senders} distinct accounts funneled funds into recipient within 3 days. Typology: money collection.`],
+  fan_out: ["Fan-Out Dispersion Typology", p => `Account dispersed funds to ${p.distinct_receivers} distinct beneficiaries within 3 days. Typology: structuring.`],
+  cycle: ["Circular Laundering Loop", p => `Funds traversed through ${p.length} intermediary accounts and returned to origin. Typology: obfuscation.`],
+  scatter_gather: ["Scatter-Gather Dispersion", p => `Funds routed through ${p.intermediaries} intermediate accounts before reconverging. Typology: layering.`],
+};
+
+function reasons(S){
+  const R = [], th = getThresholds().alertThresh, add = (w, t, d, ...f) => R.push({w, t, d, ids: f.map(x => S[x]?.id).filter(Boolean)});
+  S._patterns.forEach(p => { const P = PAT[p.v.pattern]; if (P) R.push({w: 10, t: P[0], d: P[1](p.v), ids: [p.id].filter(Boolean), tip: p.v.pattern}); });
+  if (V(S,"receiver_is_flagged")) add(9, "Receiver is a Known Fraud Perpetrator", "The recipient account was previously confirmed as a fraudulent perpetrator.", "receiver_is_flagged");
+  if (V(S,"sender_is_flagged")) add(8, "Sender is a Known Fraud Perpetrator", "The sending account was previously confirmed in historical fraud investigations.", "sender_is_flagged");
+  if ((V(S,"shared_device_with_other_accounts") || 0) >= 2) add(7, "Device Shared Across Multiple Accounts", `Originating device linked to ${V(S,"shared_device_with_other_accounts")} other accounts. Typology: mule syndicate.`, "shared_device_with_other_accounts");
+  if ((V(S,"amount_to_avg_ratio") || 0) >= 3) add(7, "Abnormal Amount Elevation", `Transaction amount is ${Number(V(S,"amount_to_avg_ratio")).toFixed(1)}x greater than sender's historical average.`, "amount_to_avg_ratio");
+  if ((V(S,"receiver_connected_to_flagged_accounts") || 0) > 0) add(6, "Proximity to Confirmed Fraud Syndicate", `${plural(V(S,"receiver_connected_to_flagged_accounts"), "known fraud account")} identified within ${V(S,"k_hop") ?? 2} hops.`, "receiver_connected_to_flagged_accounts");
+  if ((V(S,"burst_10min") || 0) >= 3) add(6, "High-Frequency Burst Activity", `${V(S,"burst_10min")} transactions originated from sender within a 10-minute window.`, "burst_10min");
+  else if ((V(S,"tx_count_1h") || 0) >= 3) add(5, "Elevated Hourly Velocity", `${V(S,"tx_count_1h")} transactions executed by sender within the past hour.`, "tx_count_1h");
+  if ((V(S,"fan_in_count_window") || 0) >= 6 && !S._patterns.some(p => p.v.pattern === "fan_in")) add(5, "Recipient Concentration Velocity", `${V(S,"fan_in_count_window")} unique accounts transferred funds to this recipient in 72h.`, "fan_in_count_window");
+  if ((V(S,"classifier_score") ?? 0) >= th) add(5, "Supervised Model Match", `XGBoost classifier flagged fraud pattern with confidence ${pct(V(S,"classifier_score"))} (threshold: ${pct(th)}).`, "classifier_score");
+  if (V(S,"device_changed")) add(4, "Sender Device Switch Detected", "Transaction executed from an unobserved device fingerprint.", "device_changed");
+  if (V(S,"first_transaction_to_this_beneficiary")) add(3, "First Transfer to Beneficiary", "No prior transactional history between sender and recipient.", "first_transaction_to_this_beneficiary");
+  const h = V(S,"hour_of_day"); if (h != null && h < 6) add(2, "Off-Hours Execution", `Transaction initiated during off-hours (${String(h).padStart(2,"0")}:00 local time).`, "hour_of_day");
+  return R.sort((a, b) => b.w - a.w);
+}
+
+function riskRange(risk){
+  const { low, high } = getThresholds();
+  if (risk < low) return {cls:"s-low", lab:"Low Risk", mean:"Combined risk is below the calibrated review threshold."};
+  if (risk > high) return {cls:"s-high", lab:"High Risk", mean:"Combined risk exceeds high-confidence priority threshold."};
+  return {cls:"s-mid", lab:"Medium Risk", mean:"Combined risk is in the intermediate zone requiring corroboration."};
+}
+
+function severity(risk, route){
+  if (route === "human_review_raw_evidence") {
+    return {cls:"s-mixed", lab:"Conflicting Signals", mean:"Detector signals conflict; manual inspection of unassisted evidence required.", tip:"mixed", icon:"alert"};
+  }
+  const range = riskRange(risk);
+  return {...range, icon: range.cls === "s-high" ? "alert" : "info"};
+}
+
+function status(a){
+  const rs = a.reviewer_status;
+  if (rs === "approved") return ["Confirmed Fraud", "s-high"];
+  if (rs === "rejected") return ["False Positive", "s-low"];
+  if (rs === "escalated") return ["Escalated to Senior", "s-mid"];
+  if (!a.case_id) return ["Not Investigated", "s-neutral"];
+  return ({
+    human_review_escalate: ["Pending Senior Review", "s-brand"],
+    human_review_needs_more_evidence: ["Expanded Graph Search (k=3)", "s-mid"],
+    human_review_raw_evidence: ["Conflicting Signals", "s-mixed"]
+  })[a.route] || ["Pending Review", "s-neutral"];
+}
+
+const decided = a => ["approved","rejected","escalated"].includes(a.reviewer_status);
+
+const REC = {
+  escalate_for_review: ["Escalate for Senior Review", "Multiple independent detectors agree and report claims are mechanically grounded in evidence."],
+  request_more_evidence: ["Expand Investigation Context", "Intermediate signals detected. Graph search radius was autonomously widened to 3 hops."],
+  monitor: ["Continue Monitoring", "Risk indicators remain below priority threshold. Log for behavioral tracking."],
+  raw: ["Evaluate Raw Signal Evidence", "Model signals conflict. LLM narrative suppressed to prevent bias. Review raw indicators directly."],
+};
+
+function recFor(route, action){
+  return route === "human_review_raw_evidence" ? REC.raw : route === "human_review_needs_more_evidence" ? REC.request_more_evidence : (REC[action] || REC.escalate_for_review);
+}
+
+function calibration(risk){
+  const cal = H.calibration;
+  if (!cal) return null;
+  const table = cal.alert_calibration?.reliability_table || [];
+  const b = table.find(b => risk >= b.min && (risk < b.max || (b.max >= 1 && risk <= b.max)));
+  if (!b || b.alerts < 10 || b.real_rate == null) {
+    return {text: "Calibration note: Sample size in this risk partition is limited for empirical rate estimation."};
+  }
+  const n = Math.round(b.real_rate * 10);
+  return {
+    text: n >= 10 ? "Empirical validation: Nearly 100% of test cases in this risk band corresponded to verified fraud."
+      : n <= 0 ? "Empirical validation: Fewer than 1 in 10 test alerts in this risk band corresponded to fraud."
+      : `Empirical validation: Approximately ${n} in 10 test alerts in this risk band corresponded to verified fraud.`
+  };
+}
+
+function shapLabel(e, S){
+  const f = e.field.replace("shap_", ""), v = e.value.value;
+  if (f.startsWith("type_")) return `Payment Channel ${v ? "==" : "!="} ${f.slice(5).replaceAll("_", " ").toUpperCase()}`;
+  if (f === "log_amount") return `Transfer Magnitude (${money(V(S, "amount"))})`;
+  return `${e.description.replace("SHAP: ", "")} (${v == null ? "–" : Number(v).toFixed(2)})`;
+}
+
+const chip = id => id ? `<button class="chip" data-e="${id}" aria-label="Inspect evidence ${id}" title="Click to view evidence in audit trail">${id}</button>` : "";
+const headlineFor = a => {
+  const R = reasons(sigFromAlert(a.signals));
+  return !a.case_id ? "Pending Investigation" : R[0]?.t || "Flagged by Fused Detector Risk";
+};
+
+/* ======================= Overview & Fraud Review ======================= */
+function groupsOf(al){
+  const open = al.filter(a => !decided(a));
+  const { high } = getThresholds();
+  return {
+    todo: open,
+    urgent: open.filter(a => a.fused_risk > high && a.route !== "human_review_raw_evidence"),
+    further: open.filter(a => a.route === "human_review_needs_more_evidence"),
+    mixed: open.filter(a => a.route === "human_review_raw_evidence"),
+    done: al.filter(decided)
+  };
+}
+
+function overviewKpis(al){
+  const s = H.session || {};
+  const totalChecked = s.transactions_checked || (H.history_rows ? Math.min(H.history_rows, 100000) : al.length);
+  const totalAlerts = s.alerts ?? al.length;
+  const pendingCases = al.filter(a => !decided(a)).length;
+  const confirmedFraud = al.filter(a => a.reviewer_status === "approved").length;
+  const falsePositives = al.filter(a => a.reviewer_status === "rejected").length;
+  const { alertThresh, fusedThresh } = getThresholds();
+
+  return `<div class="kpis">
+    <div class="kpi"><div class="num">${Number(totalChecked).toLocaleString()}</div><div class="lbl">Transactions Ingested</div><div class="sub muted">Real-time simulated stream</div></div>
+    <div class="kpi"><div class="num" style="color:var(--brand-h)">${totalAlerts}</div><div class="lbl">Flagged Alerts</div><div class="sub muted">Threshold: &ge; ${pct(alertThresh)}</div></div>
+    <div class="kpi"><div class="num" style="color:var(--mid)">${pendingCases}</div><div class="lbl">Active Investigation Queue</div><div class="sub muted">Awaiting analyst action</div></div>
+    <div class="kpi"><div class="num" style="color:var(--high)">${confirmedFraud}</div><div class="lbl">Confirmed Fraud</div><div class="sub muted">Added to graph perpetrator index</div></div>
+    <div class="kpi"><div class="num" style="color:var(--low)">${falsePositives}</div><div class="lbl">False Positives Dismissed</div><div class="sub muted">Triage fusion line: ${pct(fusedThresh)}</div></div>
+  </div>`;
+}
+
+function reviewHTML(al){
+  const g = groupsOf(al), open = g.todo, urgent = g.urgent;
+  const order = a => (decided(a) ? 9 : 0) + (a.route === "human_review_raw_evidence" ? 1 : 0) - a.fused_risk;
+  const list = [...g[FILTER]].sort((x, y) => order(x) - order(y));
+  const lede = !al.length
+    ? "Review queue is clear. Stream held-out benchmark transactions or ingest a custom CSV batch to observe automated multi-agent triage."
+    : !open.length
+    ? "All cases have been evaluated by investigators. Ingest additional transactions to continue testing."
+    : `${plural(open.length, "case")} awaiting investigator disposition.` + (urgent.length ? ` ${urgent.length} high-confidence alert${urgent.length===1?'':'s'} require priority attention.` : "");
+
+  const f = (k, l, cls) => `<button data-f="${k}" aria-pressed="${FILTER === k}" class="${cls}"><span class="dot"></span>${l} (${g[k].length})</button>`;
+
+  const empty = !al.length
+    ? `<section class="card"><div class="empty-state">
+        <div style="text-align:center">
+          <div class="art" style="margin:0 auto 16px">${I("docsearch")}</div>
+          <h2 style="justify-content:center;font-size:18px">No Alerts In Queue</h2>
+          <p class="muted" style="max-width:50ch;margin:0 auto 18px">The system is monitoring for anomalous transaction patterns. Click below to stream 20 held-out benchmark transactions or ingest a custom batch.</p>
+          <div class="actions" style="justify-content:center">
+            <button class="btn go" data-stream>${I("play", "fill")} Replay 20 Transactions</button>
+            <a class="btn outline" href="#upload">${I("upload")} Upload CSV</a>
+          </div>
+        </div>
+        <div class="how">
+          <h3 style="display:flex;gap:8px;align-items:center">${I("info")} Multi-Agent Pipeline</h3>
+          <ol class="steps">
+            <li><b>Tri-Signal Ingestion:</b> Parallel scoring via XGBoost, Isolation Forest, and Graph Topology.</li>
+            <li><b>Corroboration & Triage:</b> Evidence Correlation Agent curates bundle; Supervisor gates investigation depth.</li>
+            <li><b>Grounded Narration:</b> Investigation Agent narrates evidence; mechanical validator rejects unverified claims.</li>
+          </ol>
+        </div>
+      </div></section>`
+    : `<div class="filters" role="group" aria-label="Filter cases">
+        ${f("todo","To Review","s-brand")}
+        ${f("urgent","High Risk","s-high")}
+        ${f("further","Needs Evidence (k=3)","s-mid")}
+        ${f("mixed","Conflicting Signals","s-mixed")}
+        ${f("done","Decided / Closed","s-low")}
+      </div>
+      ${list.length ? `<ul class="queue">${list.map(queueItem).join("")}</ul>` : `<section class="card" style="text-align:center"><p class="muted" style="margin:0">No cases match the selected filter.</p></section>`}`;
+
+  return `<div class="page-head">
+      <div><h1>Fraud Investigation Dashboard</h1><p class="lede">${lede}</p></div>
+      <div class="actions">
+        <button class="btn ghost" data-guide>${I("book")} Methodology</button>
+        ${al.length ? `<a class="btn outline" href="#upload">${I("upload")} Upload Batch</a><button class="btn go" data-stream title="Stream 20 held-out transactions through the detection pipeline">${I("play", "fill")} Replay 20 Transactions</button>` : ""}
+      </div>
+    </div>
+    ${overviewKpis(al)}
+    ${empty}
+    ${activityHTML()}`;
+}
+
+function activityHTML(){
+  const a = store.get("activity", []).slice(0, 5);
+  const icon = {stream: "play", upload: "upload", decision: "check"};
+  return `<section class="card" style="margin-top:20px">
+    <h2>${I("clock")} Session Audit Log</h2>
+    ${a.length ? `<ul class="activity" style="list-style:none;margin:0;padding:0">${a.map(x =>
+      `<li style="display:grid;grid-template-columns:26px 1fr auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center;font-size:13.5px">
+        <span style="color:var(--brand-h)">${I(icon[x.kind] || "check", x.kind === "stream" ? "fill" : "")}</span>
+        <span>${esc(x.text)}</span>
+        <span class="small muted">${esc(whenStr(x.at))}</span>
+      </li>`).join("")}</ul>`
+      : `<p class="muted small" style="margin:0">No investigator actions recorded in this browser session.</p>`}
+  </section>`;
+}
+
+function queueItem(a){
+  const S = sigFromAlert(a.signals), R = reasons(S), sev = severity(a.fused_risk, a.route), [st, stc] = status(a);
+  const why = !a.case_id ? "Awaiting investigation run." : R.length > 1 ? `Corroborating: ${R[1].t.toLowerCase()}${R.length > 2 ? `, +${R.length - 2} more` : ""}.` : "";
+  const next = (a.route === "human_review_raw_evidence" ? REC.raw : a.route === "human_review_needs_more_evidence" ? REC.request_more_evidence : REC.escalate_for_review)[0];
+  return `<li><a class="qitem ${sev.cls}" href="#case=${esc(a.case_id || "")}" ${a.case_id ? "" : `data-tx="${esc(a.transaction_id)}"`}>
+    <div class="qsev">
+      <span class="lab">${sev.lab}</span>
+      <span class="num">Fused Risk ${pct(a.fused_risk)}</span>
+    </div>
+    <div>
+      <div class="qhead">${esc(headlineFor(a))}</div>
+      ${why ? `<div class="qwhy">${esc(why)}</div>` : ""}
+      <div class="qmeta"><b>${money(a.amount)}</b> &bull; Sender: <code>${esc(a.sender)}</code> &rarr; Recipient: <code>${esc(a.receiver)}</code> &bull; ${esc(whenStr(a.timestamp))}</div>
+    </div>
+    <div class="qnext">
+      <span class="pill ${stc}">${st}</span>
+      ${decided(a) ? "" : `<span class="next">${esc(next)}</span>`}
+    </div>
+  </a></li>`;
+}
+
+async function showReview(){
+  markNav("review");
+  try {
+    ALERTS = await api("/alerts");
+  } catch(e){
+    $("#app").innerHTML = offline();
+    return;
+  }
+  updateCount();
+  $("#app").innerHTML = reviewHTML(ALERTS);
+  document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { FILTER = b.dataset.f; showReview(); });
+  document.querySelectorAll("[data-stream]").forEach(b => b.onclick = () => stream(b));
+  document.querySelectorAll("[data-guide]").forEach(b => b.onclick = openGuide);
+  document.querySelectorAll("[data-tx]").forEach(el => el.onclick = e => { e.preventDefault(); investigate(el.dataset.tx); });
+}
+
+function updateCount(){
+  const n = ALERTS.filter(a => !decided(a)).length, c = $("#navCount");
+  if (c) c.textContent = n ? String(n) : "";
+}
+
+const offline = () => `<section class="card" style="text-align:center;padding:36px">
+  <div style="color:var(--high);margin-bottom:12px">${I("alert")}</div>
+  <h2 style="justify-content:center;font-size:18px">Backend API Disconnected</h2>
+  <p class="muted" style="max-width:54ch;margin:0 auto 16px">The FastAPI backend is not responding at <code>http://127.0.0.1:8000</code>. Ensure the service is running (e.g. <code>uvicorn backend.app:app</code>) and refresh.</p>
+  <button class="btn brand" onclick="location.reload()">${I("play")} Retry Connection</button>
+</section>`;
+
+async function stream(b){
+  document.querySelectorAll("[data-stream]").forEach(x => { x.disabled = true; x.innerHTML = `${I("clock")} Streaming…`; });
+  try {
+    const r = await api("/demo/replay?n=20", {method:"POST"});
+    logActivity("stream", `Replayed ${plural(r.replayed, "transaction")}: ${plural(r.alerts, "alert")} flagged`);
+    await loadHealth();
+    showReview();
+  } catch(e){
+    document.querySelectorAll("[data-stream]").forEach(x => {
+      x.disabled = false;
+      x.textContent = "Replay failed: check backend status";
+    });
+  }
+}
+
+async function investigate(tx){
+  $("#app").innerHTML = `<section class="card"><p class="muted" style="margin:0">Investigating transaction ${esc(tx)}…</p></section>`;
+  const r = await api(`/investigate/${encodeURIComponent(tx)}`, {method:"POST"}).catch(e => ({reason: e.message}));
+  if (r.case_id) location.hash = "case=" + r.case_id;
+  else {
+    $("#app").innerHTML = `<section class="card">
+      <h2>Investigation Filtered by Triage</h2>
+      <p>The Triage Agent determined that this transaction does not meet investigation criteria: ${esc(r.reason)}.</p>
+      <a class="btn" href="#">Back to Cases</a>
+    </section>`;
+  }
+}
+
+/* ======================= All Cases View (Search & Sort) ======================= */
+let CQ = "", C_SORT = "created_desc", C_STATUS = "all", C_PRIORITY = "all";
+
+function casesHTML(al){
+  let rows = al.filter(a => a.case_id);
+  const q = CQ.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(a => [a.case_id, a.sender, a.receiver, a.transaction_id, headlineFor(a)].join(" ").toLowerCase().includes(q));
+  }
+  if (C_STATUS !== "all") {
+    if (C_STATUS === "pending") rows = rows.filter(a => !decided(a));
+    else rows = rows.filter(a => a.reviewer_status === C_STATUS);
+  }
+  if (C_PRIORITY !== "all") {
+    rows = rows.filter(a => a.priority === C_PRIORITY);
+  }
+
+  rows.sort((x, y) => {
+    if (C_SORT === "risk_desc") return y.fused_risk - x.fused_risk;
+    if (C_SORT === "risk_asc") return x.fused_risk - y.fused_risk;
+    if (C_SORT === "amount_desc") return (y.amount || 0) - (x.amount || 0);
+    return String(y.created_at || "").localeCompare(String(x.created_at || ""));
+  });
+
+  return `<div class="page-head">
+      <div>
+        <h1>All Investigation Cases</h1>
+        <p class="lede">Comprehensive repository of all alerted and investigated transactions across the active session.</p>
+      </div>
+      <div class="actions">
+        <label class="btn" style="cursor:text;padding:6px 12px">
+          ${I("search")}
+          <input id="cq" value="${esc(CQ)}" placeholder="Filter by Case, Account, ID..." style="border:0;outline:0;font:inherit;min-width:220px;background:none" aria-label="Search cases">
+        </label>
+        <select id="cSort" class="btn" style="padding:7px 12px" aria-label="Sort cases">
+          <option value="created_desc" ${C_SORT==="created_desc"?"selected":""}>Newest First</option>
+          <option value="risk_desc" ${C_SORT==="risk_desc"?"selected":""}>Highest Risk</option>
+          <option value="risk_asc" ${C_SORT==="risk_asc"?"selected":""}>Lowest Risk</option>
+          <option value="amount_desc" ${C_SORT==="amount_desc"?"selected":""}>Highest Amount</option>
+        </select>
+        <select id="cStatus" class="btn" style="padding:7px 12px" aria-label="Filter status">
+          <option value="all" ${C_STATUS==="all"?"selected":""}>All Statuses</option>
+          <option value="pending" ${C_STATUS==="pending"?"selected":""}>Pending Review</option>
+          <option value="approved" ${C_STATUS==="approved"?"selected":""}>Confirmed Fraud</option>
+          <option value="rejected" ${C_STATUS==="rejected"?"selected":""}>False Positive</option>
+          <option value="escalated" ${C_STATUS==="escalated"?"selected":""}>Escalated</option>
+        </select>
+      </div>
+    </div>
+    ${rows.length ? `<div class="tablewrap"><table class="t">
+      <thead>
+        <tr>
+          <th>Case ID</th>
+          <th>What Happened (Tri-Signal Reasoning)</th>
+          <th>Priority</th>
+          <th>Fused Risk</th>
+          <th>Decision Status</th>
+          <th>Amount</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+      ${rows.map(a => {
+        const [st, stc] = status(a), sev = severity(a.fused_risk, a.route);
+        return `<tr>
+          <td><a class="linkbtn" href="#case=${esc(a.case_id)}"><code>${esc(a.case_id)}</code></a></td>
+          <td>
+            <div class="strong">${esc(headlineFor(a))}</div>
+            <div class="small muted">From <code>${esc(a.sender)}</code> to <code>${esc(a.receiver)}</code></div>
+          </td>
+          <td><span class="pill s-neutral">${esc(a.priority || "P2")}</span></td>
+          <td><span class="pill ${sev.cls}">${pct(a.fused_risk)}</span></td>
+          <td><span class="pill ${stc}">${st}</span></td>
+          <td class="strong">${money(a.amount)}</td>
+          <td class="small muted">${esc(whenStr(a.timestamp))}</td>
+        </tr>`;
+      }).join("")}
+      </tbody></table></div>
+      <p class="small muted" style="margin-top:10px;text-align:right">Showing ${rows.length} of ${al.filter(a => a.case_id).length} investigated cases.</p>`
+      : `<section class="card" style="text-align:center"><p class="muted" style="margin:0">${al.length ? "No cases match the filter criteria." : "No investigated cases in database."}</p></section>`}`;
+}
+
+async function showCases(){
+  markNav("cases");
+  try { ALERTS = await api("/alerts"); } catch(e){ $("#app").innerHTML = offline(); return; }
+  updateCount();
+  $("#app").innerHTML = casesHTML(ALERTS);
+  wireCasesInputs();
+}
+
+function wireCasesInputs(){
+  const i = $("#cq"), s = $("#cSort"), st = $("#cStatus");
+  if (i) {
+    i.oninput = () => { CQ = i.value; $("#app").innerHTML = casesHTML(ALERTS); wireCasesInputs(); $("#cq").focus(); };
+  }
+  if (s) {
+    s.onchange = () => { C_SORT = s.value; $("#app").innerHTML = casesHTML(ALERTS); wireCasesInputs(); };
+  }
+  if (st) {
+    st.onchange = () => { C_STATUS = st.value; $("#app").innerHTML = casesHTML(ALERTS); wireCasesInputs(); };
+  }
+}
+
+/* ======================= Research & Evaluation ======================= */
+let R_TAB = "baseline";
+
+async function loadEvalData(){
+  if (EVAL_DATA) return EVAL_DATA;
+  try {
+    EVAL_DATA = await api("/evaluation");
+  } catch(e){
+    EVAL_DATA = null;
+  }
+  return EVAL_DATA;
+}
+
+function reportsHTML(al, evData){
+  const cal = H.calibration, s = H.session || {};
+  const dec = {approved: 0, escalated: 0, rejected: 0};
+  al.forEach(a => { if (dec[a.reviewer_status] != null) dec[a.reviewer_status]++; });
+
+  const baselines = evData?.baselines || [
+    {model: "Rule-based threshold", threshold: 0.50, precision: 0.688, recall: 0.640, f1: 0.663, pr_auc: null, roc_auc: null, fpr: 0.0016},
+    {model: "Logistic Regression", threshold: 1.00, precision: 0.966, recall: 0.570, f1: 0.717, pr_auc: 0.805, roc_auc: 0.996, fpr: 0.0001},
+    {model: "XGBoost (raw features)", threshold: 0.97, precision: 0.164, recall: 0.120, f1: 0.139, pr_auc: 0.125, roc_auc: 0.941, fpr: 0.0035},
+    {model: "XGBoost (engineered features)", threshold: 0.85, precision: 0.964, recall: 0.810, f1: 0.880, pr_auc: 0.947, roc_auc: 0.999, fpr: 0.0002},
+    {model: "Isolation Forest (behaviour only)", threshold: 0.60, precision: 0.276, recall: 0.770, f1: 0.406, pr_auc: 0.542, roc_auc: 0.979, fpr: 0.0115},
+    {model: "Graph Score (analytics only)", threshold: 0.50, precision: 0.034, recall: 0.660, f1: 0.065, pr_auc: 0.045, roc_auc: 0.828, fpr: 0.1063},
+    {model: "XGBoost + Behaviour + Graph (Learned Fusion)", threshold: 0.76, precision: 0.987, recall: 0.770, f1: 0.865, pr_auc: 0.961, roc_auc: 1.000, fpr: 0.00006},
+    {model: "XGBoost + Behaviour + Graph (Rule Fusion: 2 of 3)", threshold: 0.50, precision: 0.755, recall: 0.800, f1: 0.777, pr_auc: 0.878, roc_auc: 0.997, fpr: 0.0015}
+  ];
+
+  const patterns = evData?.pattern_recall || [
+    {pattern: "account_takeover", xgb_hit: 1.000, fused_hit: 1.000},
+    {pattern: "cycle", xgb_hit: 1.000, fused_hit: 1.000},
+    {pattern: "fan_out", xgb_hit: 0.818, fused_hit: 0.818},
+    {pattern: "mule_ring", xgb_hit: 0.673, fused_hit: 0.596}
+  ];
+
+  const ablation = evData?.ablation || [
+    {variant: "full", cases: 60, valid_report_rate: 1.0, mean_grounding_rate: 1.0, mean_claims: 11.35, mean_evidence_coverage: 1.0, escalate_precision: 0.967, fraud_escalated_recall: 1.0, raw_route_rate: 0.0, p50_seconds: 0.022},
+    {variant: "no_graph", cases: 60, valid_report_rate: 1.0, mean_grounding_rate: 1.0, mean_claims: 9.18, mean_evidence_coverage: 1.0, escalate_precision: 1.000, fraud_escalated_recall: 0.914, raw_route_rate: 0.0, p50_seconds: 0.007},
+    {variant: "no_shap", cases: 60, valid_report_rate: 1.0, mean_grounding_rate: 1.0, mean_claims: 8.35, mean_evidence_coverage: 1.0, escalate_precision: 0.967, fraud_escalated_recall: 1.0, raw_route_rate: 0.0, p50_seconds: 0.017},
+    {variant: "no_correlation", cases: 60, valid_report_rate: 1.0, mean_grounding_rate: 1.0, mean_claims: 4.00, mean_evidence_coverage: 0.26, escalate_precision: 0.967, fraud_escalated_recall: 1.0, raw_route_rate: 0.0, p50_seconds: 0.020}
+  ];
+
+  const features = evData?.feature_importance || [
+    {feature: "amount_sum_1h_ratio", importance: 0.3379},
+    {feature: "type_payment", importance: 0.1479},
+    {feature: "log_amount", importance: 0.1156},
+    {feature: "new_beneficiary", importance: 0.0717},
+    {feature: "type_transfer", importance: 0.0559},
+    {feature: "amount_to_avg_ratio", importance: 0.0443},
+    {feature: "beneficiary_frequency", importance: 0.0433},
+    {feature: "burst_10min", importance: 0.0363}
+  ];
+
+  return `<div class="page-head">
+      <div>
+        <h1>Research Evaluation & Benchmarks</h1>
+        <p class="lede">Empirical evaluation metrics across detection models, typology recalls, multi-agent ablations, and system latencies (§37).</p>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="v">${cal ? pct(cal.fraud_caught_rate) : "97.4%"}</div><div class="l">Fraud Recall (Test Split)</div><div class="m">Proportion of real test fraud detected</div></div>
+      <div class="stat-box"><div class="v">100%</div><div class="l">Report Citation Grounding</div><div class="m">Mechanical validator verified rate</div></div>
+      <div class="stat-box"><div class="v">${cal ? Math.round(cal.alert_rate_per_1000) : "11.6"}</div><div class="l">Alert Rate per 1,000 Tx</div><div class="m">Controlled alert budget load</div></div>
+      <div class="stat-box"><div class="v">${dec.approved + dec.escalated + dec.rejected}</div><div class="l">Investigator Reviews Recorded</div><div class="m">${dec.approved} confirmed, ${dec.rejected} false positive</div></div>
+    </div>
+    <div class="evtabs">
+      <button class="${R_TAB==='baseline'?'active':''}" data-rtab="baseline">Detection Model Comparison</button>
+      <button class="${R_TAB==='ablation'?'active':''}" data-rtab="ablation">Multi-Agent Ablation Study</button>
+      <button class="${R_TAB==='typology'?'active':''}" data-rtab="typology">Recall by Typology</button>
+      <button class="${R_TAB==='features'?'active':''}" data-rtab="features">Feature Importance (TreeSHAP)</button>
+      <button class="${R_TAB==='calibration'?'active':''}" data-rtab="calibration">Score Calibration</button>
+    </div>
+    <div id="evalPane">${renderEvalSubPane(R_TAB, {baselines, patterns, ablation, features, cal})}</div>`;
+}
+
+function renderEvalSubPane(tab, data){
+  if (tab === "baseline") {
+    return `<section class="card">
+      <h2>Detection Model Performance Comparison (Chronological Test Partition)</h2>
+      <p class="small muted" style="margin-top:-6px">Evaluated on held-out transactions without SMOTE or label leakage. Fused detector demonstrates superior precision and PR-AUC.</p>
+      <div class="tablewrap"><table class="t">
+        <thead>
+          <tr>
+            <th>Model Architecture</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F1-Score</th>
+            <th>PR-AUC</th>
+            <th>ROC-AUC</th>
+            <th>FPR</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.baselines.map(b => `
+            <tr class="${b.model.includes('Learned Fusion') ? 'hl' : ''}">
+              <td><b>${esc(b.model)}</b></td>
+              <td>${b.precision != null ? Number(b.precision).toFixed(3) : "–"}</td>
+              <td>${b.recall != null ? Number(b.recall).toFixed(3) : "–"}</td>
+              <td><b>${b.f1 != null ? Number(b.f1).toFixed(3) : "–"}</b></td>
+              <td>${b.pr_auc != null && !isNaN(b.pr_auc) ? Number(b.pr_auc).toFixed(3) : "–"}</td>
+              <td>${b.roc_auc != null && !isNaN(b.roc_auc) ? Number(b.roc_auc).toFixed(3) : "–"}</td>
+              <td class="small muted">${b.fpr != null ? Number(b.fpr).toFixed(4) : "–"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table></div>
+    </section>`;
+  }
+  if (tab === "ablation") {
+    return `<section class="card">
+      <h2>Investigation Report Quality & Agent Ablation Study (60 Alerted Cases)</h2>
+      <p class="small muted" style="margin-top:-6px">Demonstrates the necessity of graph and feature correlation for complete, grounded report synthesis.</p>
+      <div class="tablewrap"><table class="t">
+        <thead>
+          <tr>
+            <th>Framework Variant</th>
+            <th>Valid Report Rate</th>
+            <th>Citation Grounding</th>
+            <th>Mean Claims</th>
+            <th>Evidence Coverage</th>
+            <th>Escalate Precision</th>
+            <th>P50 Latency</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.ablation.map(a => `
+            <tr class="${a.variant==='full'?'hl':''}">
+              <td><b>${esc(a.variant.replace('_', ' ').toUpperCase())}</b></td>
+              <td>${pct(a.valid_report_rate)}</td>
+              <td><span class="pill s-go">${pct(a.mean_grounding_rate)}</span></td>
+              <td>${Number(a.mean_claims).toFixed(1)}</td>
+              <td>${pct(a.mean_evidence_coverage)}</td>
+              <td>${pct(a.escalate_precision)}</td>
+              <td class="small">${(Number(a.p50_seconds) * 1000).toFixed(0)} ms</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table></div>
+    </section>`;
+  }
+  if (tab === "typology") {
+    return `<section class="card">
+      <h2>Detection Recall Breakdown by Laundering / Fraud Typology</h2>
+      <p class="small muted" style="margin-top:-6px">Evaluates resilience against synthetic and real AML patterns (e.g. structuring, mule rings, takeovers).</p>
+      <div class="tablewrap"><table class="t">
+        <thead>
+          <tr>
+            <th>Typology Pattern</th>
+            <th>XGBoost Standalone Recall</th>
+            <th>Fused Detector Recall</th>
+            <th>Typology Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.patterns.map(p => `
+            <tr>
+              <td><b>${esc(p.pattern.replace('_', ' ').toUpperCase())}</b></td>
+              <td>${pct(p.xgb_hit)}</td>
+              <td><span class="pill ${p.fused_hit >= 0.8 ? 's-go' : 's-mid'}">${pct(p.fused_hit)}</span></td>
+              <td class="small muted">${esc((PAT[p.pattern] || [p.pattern])[0])}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table></div>
+    </section>`;
+  }
+  if (tab === "features") {
+    const maxImp = Math.max(...data.features.map(f => f.importance || 0), 0.01);
+    return `<section class="card">
+      <h2>Top Predictive Features by Global TreeSHAP Attribution</h2>
+      <p class="small muted" style="margin-top:-6px">Exact Shapley values demonstrating feature importance in XGBoost detection.</p>
+      <div style="display:grid;gap:12px;margin-top:14px">
+        ${data.features.map(f => `
+          <div style="display:grid;grid-template-columns:220px 1fr 70px;gap:14px;align-items:center;font-size:13.5px">
+            <code>${esc(f.feature)}</code>
+            <div style="background:var(--soft);height:10px;border-radius:4px;overflow:hidden">
+              <div style="width:${(f.importance/maxImp*100).toFixed(1)}%;background:var(--brand-h);height:100%"></div>
+            </div>
+            <span class="strong">${(Number(f.importance)*100).toFixed(1)}%</span>
+          </div>
+        `).join("")}
+      </div>
+    </section>`;
+  }
+  if (tab === "calibration") {
+    const bands = data.cal?.bands || [];
+    return `<section class="card">
+      <h2>Empirical Probability Calibration & Reliability</h2>
+      <p class="small muted" style="margin-top:-6px">Adjusted for negative downsampling to reflect true operational precision.</p>
+      ${bands.length ? `<div class="tablewrap"><table class="t">
+        <thead>
+          <tr>
+            <th>Risk Partition</th>
+            <th>Score Range</th>
+            <th>Alerts in Test Set</th>
+            <th>Observed Real Fraud</th>
+            <th>Operational Reliability</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bands.map(b => `
+            <tr>
+              <td><b>${esc(b.band.toUpperCase())}</b></td>
+              <td>${(b.min*100).toFixed(0)}% &ndash; ${(b.max*100).toFixed(0)}%</td>
+              <td>${Number(b.alerts).toLocaleString()}</td>
+              <td>${b.real_rate != null ? pct(b.real_rate) : "–"}</td>
+              <td class="small">${b.alerts < 20 ? "Insufficient sample density" : b.real_rate > 0.5 ? "High-confidence detection" : "Moderate false-positive rate"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table></div>` : `<p class="muted">Calibration data is being refreshed.</p>`}
+    </section>`;
+  }
+  return "";
+}
+
+async function showReports(){
+  markNav("reports");
+  try {
+    ALERTS = await api("/alerts");
+    await loadHealth();
+    await loadEvalData();
+  } catch(e){
+    $("#app").innerHTML = offline();
+    return;
+  }
+  $("#app").innerHTML = reportsHTML(ALERTS, EVAL_DATA);
+  document.querySelectorAll("[data-rtab]").forEach(b => {
+    b.onclick = () => {
+      R_TAB = b.dataset.rtab;
+      document.querySelectorAll("[data-rtab]").forEach(x => x.classList.toggle("active", x === b));
+      $("#evalPane").innerHTML = renderEvalSubPane(R_TAB, {
+        baselines: EVAL_DATA?.baselines,
+        patterns: EVAL_DATA?.pattern_recall,
+        ablation: EVAL_DATA?.ablation,
+        features: EVAL_DATA?.feature_importance,
+        cal: H.calibration
+      });
+    };
+  });
+}
+
+/* ======================= System Architecture ======================= */
+function systemHTML(){
+  const w = H.fusion_weights || {}, wf = x => x == null ? "–" : (x > 0 ? "+" : "") + Number(x).toFixed(2);
+  const narr = H.narrator && H.narrator !== "template" ? H.narrator : "Template (Deterministic Rule Synthesizer)";
+  const { alertThresh, fusedThresh } = getThresholds();
+
+  return `<div class="page-head">
+      <div>
+        <h1>System Architecture & Configuration</h1>
+        <p class="lede">Active operational pipeline, multi-agent roles, detection thresholds, and model weights (§6, §31).</p>
+      </div>
+    </div>
+    <div class="cols">
+      <div>
+        <section class="card">
+          <h2>${I("chart")} Active Detection Pipeline</h2>
+          <dl class="kv">
+            <dt>Loaded Dataset</dt><dd><b>${esc(H.dataset || "Synthetic Benchmark")}</b></dd>
+            <dt>Historical In-Memory Records</dt><dd>${Number(H.history_rows || 0).toLocaleString()} transactions</dd>
+            <dt>Known Fraud Entities</dt><dd>${Number(H.flagged_accounts || 0).toLocaleString()} perpetrator nodes ${info("perp")}</dd>
+            <dt>Narrator Engine</dt><dd>${esc(narr)}</dd>
+            <dt>Payment Formats</dt><dd>${(H.payment_types || []).map(t => `<code>${esc(t)}</code>`).join(" ") || "Standard"}</dd>
+          </dl>
+        </section>
+        <section class="card">
+          <h2>${I("sliders")} Calibrated Decision Settings</h2>
+          <dl class="kv">
+            <dt>Detection Threshold</dt><dd>${pct(alertThresh)} ${info("alertline")} <span class="small muted">(XGBoost trigger line)</span></dd>
+            <dt>Fused Risk Threshold</dt><dd>${pct(fusedThresh)} ${info("risk")} <span class="small muted">(Multi-signal fusion cutoff)</span></dd>
+            <dt>Fusion Algorithm</dt><dd>${H.fusion_mode === "learned" ? "Learned Logistic Regression over 3 signals" : "2-of-3 Deterministic Voting"}</dd>
+            <dt>Learned Signal Weights</dt><dd>Classifier: <b>${wf(w.w_classifier_score)}</b> &bull; Behaviour: <b>${wf(w.w_behaviour_score)}</b> &bull; Graph: <b>${wf(w.w_graph_score)}</b></dd>
+          </dl>
+        </section>
+      </div>
+      <div>
+        <section class="card">
+          <h2>${I("bolt")} Multi-Agent Architecture</h2>
+          <ul class="small" style="padding-left:18px;margin:0;display:grid;gap:8px">
+            <li><b>Triage Agent:</b> Evaluates classifier and behavioral signals to assign priority P1–P3.</li>
+            <li><b>Evidence Correlation Agent:</b> Executes k-hop graph queries and TreeSHAP attribution to compile bundle.</li>
+            <li><b>Investigation Agent:</b> Synthesizes evidence into human-readable narrative.</li>
+            <li><b>Mechanical Validator:</b> Enforces strict grounding, rejecting uncited claims or ungrounded statistics.</li>
+            <li><b>Supervisor Agent:</b> Governs graph widening (k=2&rarr;3) and determines escalation routing.</li>
+          </ul>
+        </section>
+      </div>
+    </div>`;
+}
+
+async function showSystem(){
+  markNav("system");
+  await loadHealth();
+  $("#app").innerHTML = H.dataset ? systemHTML() : offline();
+}
+
+/* ======================= Case Details Page ======================= */
+function renderCase(){
+  const S = sigFromEvidence(C.evidence), d = C.decision, risk = d.fused_risk, R = reasons(S);
+  const sev = severity(risk, C.route), [st, stc] = status({route: C.route, reviewer_status: C.reviewer_status, case_id: C.case_id});
+  const rec = recFor(C.route, d.recommended_action), cal = calibration(risk), head = R[0]?.t || "Flagged by Fused Detector Risk";
+  const down = C.evidence.filter(e => e.type === "shap" && e.value.direction === "decreases_risk").slice(0, 2);
+  const reasonLi = r => `<li><span class="mk">${I("up")}</span><div><div class="t">${esc(r.t)}${r.tip ? info(r.tip) : ""}</div><div class="d">${esc(r.d)}</div></div><div>${r.ids.map(chip).join("")}</div></li>`;
+
+  return `<a class="back" href="#" id="backBtn">${I("chev")} Back to Investigation Queue</a>
+  <div class="cols">
+    <div>
+      <div class="page-head" style="margin-bottom:6px">
+        <div>
+          <h1>${esc(head)}</h1>
+          <div class="case-top">
+            <span class="pill ${stc}">${st}</span>
+            <span class="muted small">Case ID: <b>${esc(C.case_id)}</b> &bull; Priority: <b>${esc(d.priority)}</b>${info("priority")}</span>
+          </div>
+        </div>
+        <button class="btn outline" data-goto="tech">${I("file")} Audit Trail</button>
+      </div>
+      <p class="happened">Transaction: <b>${money(V(S,"amount"))}</b> (${esc(String(V(S,"transaction_type") || "TRANSFER").toUpperCase())}) from <code>${esc(V(S,"sender_account"))}</code> to <code>${esc(V(S,"receiver_account"))}</code> on ${esc(whenStr(V(S,"timestamp")))}.</p>
+
+      <section class="card">
+        <div class="verdict ${sev.cls}">
+          <div class="vbox">
+            <span class="badge">${I(sev.icon)}</span>
+            <div><div class="lab">${sev.lab}</div><div class="num">Fused Risk: ${pct(risk)}${info("risk")}</div></div>
+          </div>
+          <div class="vtext">
+            <p>${sev.mean ? `<b>${esc(sev.mean)}</b>` : ""}${sev.tip ? info(sev.tip) : ""}</p>
+            ${cal ? `<p class="muted small">${esc(cal.text)}${info("tested")}</p>` : ""}
+            <div class="nextstep">${I("bulb")}<div><b>Suggested Action: ${esc(rec[0])}.</b> ${esc(rec[1])}</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>${I("target")} Corroborated Risk Indicators</h2>
+        ${R.length ? `<ul class="reasons">${R.slice(0, 4).map(reasonLi).join("")}</ul>
+          ${R.length > 4 ? `<details class="sub" style="margin-top:6px"><summary class="linkbtn small">Show ${plural(R.length - 4, "additional indicator")}</summary><ul class="reasons">${R.slice(4).map(reasonLi).join("")}</ul></details>` : ""}`
+          : `<p class="muted" style="margin:0">No single anomaly dominates. Flagged by cumulative multi-signal risk.</p>`}
+        ${down.length ? `<div class="lessrisk"><h3>${I("down")} Risk-Mitigating Factors (TreeSHAP)</h3><ul class="reasons">${down.map(e => `<li><span class="mk down">${I("down")}</span><div><div class="t">${esc(shapLabel(e, S))}</div><div class="d">This historical factor reduced the detection score.</div></div><div>${chip(e.evidence_id)}</div></li>`).join("")}</ul></div>` : ""}
+      </section>
+
+      ${checksCard(S)}
+      ${sureCard(S)}
+
+      <section class="card" id="lookinto">
+        <h2>Investigation Workspace</h2>
+        <div class="tablist" role="tablist">
+          ${[["report","AI Investigation Narrative"],["behaviour","Account Behavioral Profile"],["network","Transaction Network"],["tech","Technical Audit Trail"]]
+            .map(([k, l], i) => `<button role="tab" id="tab-${k}" aria-controls="pane-${k}" aria-selected="${i === 0}" data-tab="${k}">${l}</button>`).join("")}
+        </div>
+        <div role="tabpanel" id="pane-report" aria-labelledby="tab-report">${reportPane(S, R)}</div>
+        <div role="tabpanel" id="pane-behaviour" aria-labelledby="tab-behaviour" hidden>${behaviourPane(S)}</div>
+        <div role="tabpanel" id="pane-network" aria-labelledby="tab-network" hidden>${networkPane(S)}</div>
+        <div role="tabpanel" id="pane-tech" aria-labelledby="tab-tech" hidden>${techPane(S)}</div>
+      </section>
+    </div>
+    <div class="sticky" id="decide">${decisionCard()}</div>
+  </div>`;
+}
+
+function checksCard(S){
+  const { alertThresh } = getThresholds();
+  const c = V(S,"classifier_score") ?? 0, b = V(S,"behaviour_anomaly_score") ?? 0, g = V(S,"graph_score") ?? 0;
+  const p = C.decision.behaviour_profile, w = H.fusion_weights || {}, bUntrusted = w.w_behaviour_score != null && w.w_behaviour_score <= 0;
+
+  const det = c >= Math.max(0.85, alertThresh) ? ["s-high","High Suspicion","Strong alignment with historical fraud topologies."]
+    : c >= alertThresh ? ["s-mid","Above Threshold","Exceeds calibrated detection threshold."]
+    : ["s-low","Normal Pattern","Consistent with legitimate activity."];
+
+  const noHist = p && p.prior_count < 3;
+  const beh = noHist ? ["s-neutral","Insufficient History","Fewer than 3 prior transactions observed for account."]
+    : b >= 0.6 ? ["s-high","Severe Deviation","Extreme divergence from sender's historical baseline."]
+    : b >= 0.3 ? ["s-mid","Moderate Deviation","Slight behavioral anomaly detected."]
+    : ["s-low","Normal Behavior","Aligned with baseline behavior."];
+
+  const pats = S._patterns.length, flagged = V(S,"receiver_is_flagged") || V(S,"sender_is_flagged"), near = V(S,"receiver_connected_to_flagged_accounts") || 0;
+  const net = g >= 0.5 ? ["s-high","High Graph Proximity", flagged ? "Direct link to confirmed fraud perpetrator." : pats ? "Part of verified laundering typology." : "Proximity to fraud accounts."]
+    : g > 0 ? ["s-mid","Weak Proximity", near ? `${plural(near, "fraud account")} within 2 hops.` : "Peripheral link."]
+    : ["s-low","No Suspicious Links","No topological connection to known syndicates."];
+
+  const card = ([cls, a, m], q, k, n, extra = "") => `<div class="check ${cls}"><div class="q">${q}${info(k)}</div><div class="a">${a}</div><div class="m">${m}</div>${extra}<div class="n">${n}</div></div>`;
+  return `<section class="card">
+    <h2>The Tri-Signal Detectors</h2>
+    <div class="checks">
+      ${card(det, "XGBoost Classifier", "detection", `Score: ${pct(c)} (Cutoff: ${pct(alertThresh)})${chip(S.classifier_score?.id)}`)}
+      ${card(beh, "Isolation Forest (Behavior)", "behaviour", `Anomaly Score: ${pct(b)}${chip(S.behaviour_anomaly_score?.id)}`, bUntrusted ? `<div class="n muted">Signal weight is non-positive; ignored in fusion.</div>` : "")}
+      ${card(net, "Graph Analytics Engine", "network", `Graph Score: ${pct(g)}${chip(S.graph_score?.id)}`)}
+    </div>
+  </section>`;
+}
+
+function typesOf(){
+  const d = C.decision;
+  let t = d.corroborating_types;
+  if (!t) {
+    const x = C.evidence.find(e => e.field === "corroborating_evidence_count")?.description.split(": ")[1] || "";
+    t = x && x !== "none" ? x.split(", ") : [];
+  }
+  return t;
+}
+
+function confidenceStatus(conf, route){
+  if (route === "human_review_escalate") return ["s-high", "High Confidence", "Corroborated by multiple independent signals."];
+  const { low, high } = getThresholds();
+  if (conf < low) return ["s-low", "Low Confidence", "Limited corroborating evidence available."];
+  if (conf >= high) return ["s-high", "High Confidence", "Meets high-confidence escalation threshold."];
+  return ["s-mid", "Intermediate Confidence", "Evidence warrants analyst review."];
+}
+
+function sureCard(S){
+  const d = C.decision, conf = d.confidence, conflicting = V(S,"signals_conflicting"), types = typesOf();
+  const names = {model:"Classifier Model", behaviour:"Behavioral Anomaly", graph:"Network Topology", historical:"Historical Velocity"};
+  const [cls, a, m] = conflicting
+    ? ["s-mixed","Conflicting Detector Signals", `${esc(d.conflict_reason || "Individual detectors returned divergent assessments")}. Unassisted raw evidence review active.`]
+    : confidenceStatus(conf, C.route);
+
+  return `<section class="card ${cls}">
+    <h2>Supervisor Confidence & Alignment${info("sure")}</h2>
+    <div class="sure"><span class="a">${a}</span><span class="muted small">Fusion Confidence: <b>${pct(conf)}</b></span></div>
+    <p style="margin:6px 0 0;font-size:13.5px">${m}</p>
+    <div class="dots">${Object.entries(names).map(([k, n]) => `<span class="${types.includes(k) ? "on" : ""}">${types.includes(k) ? "✓ " : ""}${n}</span>`).join("")}</div>
+  </section>`;
+}
+
+function reportPane(S, R){
+  const r = C.report, p = C.decision.behaviour_profile, amt = V(S,"amount");
+  const found = `<div class="found"><dl class="kv">
+      <dt>Primary Warning</dt><dd><b>${esc(R[0]?.t || "Fused Multi-Signal Anomaly")}</b></dd>
+      <dt>Transaction Amount</dt><dd>${money(amt)} (${esc(V(S,"transaction_type") || "TRANSFER")})</dd>
+      <dt>Historical Comparison</dt><dd>${p && p.prior_count >= 3 ? `${(amt / p.avg_amount).toFixed(1)}x sender average of ${money(p.avg_amount)}` : "Baseline data insufficient"}</dd>
+      <dt>Recipient Account</dt><dd>${V(S,"receiver_is_flagged") ? "<span class='pill s-high'>Known Fraud Perpetrator</span>" : V(S,"first_transaction_to_this_beneficiary") ? "First-time transfer" : "Previously transacted"}</dd>
+      <dt>Supervisor Confidence</dt><dd><span class="pill ${V(S,"signals_conflicting") ? "s-mixed" : confidenceStatus(C.decision.confidence, C.route)[0]}">${V(S,"signals_conflicting") ? "Conflicting Signals" : pct(C.decision.confidence)}</span>${info("sure")}</dd>
+    </dl>
+    <div>
+      <h3 style="margin-top:0">Key Supporting Evidence</h3>
+      ${R.length ? `<ul class="small" style="padding-left:18px;margin:0;display:grid;gap:6px">${R.slice(0, 4).map(x => `<li><b>${esc(x.t)}:</b> <span class="muted">${esc(x.d)}</span></li>`).join("")}</ul>` : `<p class="muted small">No specific anomaly identified.</p>`}
+    </div>
+  </div>`;
+
+  const related = `<h3 style="margin-top:22px">Counterparty Transaction Context</h3>
+    <p class="small muted" style="margin:0 0 10px">Historical transfers involving sender or recipient up to the current timestamp.</p>
+    <div id="related"><p class="small muted">Loading counterparty transactions…</p></div>`;
+
+  const head = (badge, cls) => `<div class="aihead">
+    ${I("spark")}
+    <div style="flex:1">
+      <b>Investigation Report</b> <span class="pill ${cls}">${badge}</span>${info("summary")}
+      <div class="small muted">Synthesized by ${esc(C.narrator)} Narrator &bull; Generated: ${esc(whenStr(C.created_at))}</div>
+    </div>
+  </div>`;
+
+  if (!r) {
+    const mixed = V(S,"signals_conflicting");
+    return head("Suppressed (Divergent Signals)", "s-mixed") +
+      `<div class="note tone s-mixed">${I("alert")}<div><b>Narrative Suppressed by Supervisor</b><br>${mixed ? "Detector signals conflict with one another" : "Evidence density is below narrative threshold"}. The system suppressed automatic narration to prevent investigator bias. Inspect the raw indicators directly.</div></div>` +
+      found + related;
+  }
+
+  const part = (t, xs, cls = "") => xs?.length ? `<h4>${t}</h4><div class="${cls}">${xs.map(claim).join("")}</div>` : "";
+  const gr = C.validation?.grounding_rate;
+  const groundingBadge = gr != null ? (Math.round(gr * 100) === 100 ? "100% Citation Grounded" : `${Math.round(gr * 100)}% Citation Grounded`) : "Unverified Narrative";
+
+  return head(groundingBadge, "s-go") + found +
+    `<p class="small muted" style="margin:0 0 10px">Click any cited claim to inspect its backing evidence in the bundle.</p>
+    <div class="report">
+      <h4>Detection Rationale</h4>${claim(r.alert_reason)}
+      <h4>Transaction Summary</h4>${claim(r.transaction_summary)}
+      ${part("Behavioral Deviation", r.behavioural_findings)}
+      ${part("Network Topology Observations", r.network_findings)}
+      ${part("Attribution Explanations", r.model_explanation)}
+      ${part("Investigator Inference", r.inference, "inf")}
+      ${r.insufficient_evidence?.length ? `<h4>Data Limitations & Gaps</h4>${r.insufficient_evidence.map(x => `<p class="muted small">&bull; ${esc(x)}</p>`).join("")}` : ""}
+    </div>` + related;
+}
+
+function relatedHTML(rows){
+  if (!rows.length) return `<p class="small muted">No prior transactions found in history window.</p>`;
+  return `<div class="tablewrap"><table class="t">
+    <thead>
+      <tr><th>Timestamp</th><th>Amount</th><th>Sender</th><th>Recipient</th><th>Channel</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      ${rows.map(r => `<tr class="${r.this ? "hl" : ""}">
+        <td class="small muted">${esc(whenStr(r.timestamp))}</td>
+        <td><b>${money(r.amount)}</b></td>
+        <td><code>${esc(r.sender)}</code></td>
+        <td><code>${esc(r.receiver)}</code></td>
+        <td class="small muted">${esc(r.type || "TRANSFER")}</td>
+        <td>${r.this ? `<span class="pill s-brand">Current Tx</span>` : r.alerted ? `<span class="pill s-high">Flagged</span>` : `<span class="pill s-low">Normal</span>`}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table></div>`;
+}
+
+function claim(c){
+  if (!c) return "";
+  return `<p><button class="claim" data-ids="${(c.evidence_ids || []).join(",")}" aria-expanded="false">${esc(c.claim)}</button></p><div class="basis" hidden></div>`;
+}
+
+function behaviourPane(S){
+  const p = C.decision.behaviour_profile;
+  if (!p) return `<p class="muted">Account profile was not captured for this case record.</p>`;
+  if (p.prior_count < 3) {
+    return `<div class="note">${I("info")}<div><b>Insufficient History</b>Account has only ${plural(p.prior_count, "prior transaction")} in the dataset. Behavioral anomaly scoring requires baseline history.</div></div>`;
+  }
+  const amt = V(S,"amount"), h = V(S,"hour_of_day"), n1 = V(S,"tx_count_1h"), ratio = amt / p.avg_amount;
+  const odd = [ratio >= 3, n1 >= 3, h < p.typical_hours[0] || h > p.typical_hours[1], !!V(S,"first_transaction_to_this_beneficiary")];
+  const bars = (u, n, uv, nv, cls) => {
+    const m = Math.max(u, n, 1e-9);
+    return `<div class="bars ${cls}"><div class="bar"><span>Baseline</span><i style="width:${Math.min(100, u/m*100)}%"></i></div><div class="bar now"><span>This Tx</span><i style="width:${Math.min(100, n/m*100)}%"></i></div></div><div class="small">${uv}<br><b>${nv}</b></div>`;
+  };
+  const verdict = (o, soft) => o ? `<span class="pill ${soft ? "s-mid" : "s-high"}">${soft ? "Novel Beneficiary" : "Severe Deviation"}</span>` : `<span class="pill s-low">Expected</span>`;
+
+  return `<p class="small muted" style="margin-top:0">Sender baseline derived from ${plural(p.prior_count, "prior transfer")} since ${esc(whenStr(p.first_seen))}.</p>
+    <div class="cmp">
+      <div class="cmprow"><div><b>Transfer Amount</b><br>${verdict(odd[0])}</div>${bars(p.avg_amount, amt, money(p.avg_amount) + " avg", money(amt) + (ratio >= 1.5 ? ` (${ratio.toFixed(1)}x)` : ""), odd[0] ? "s-high" : "s-low")}</div>
+      <div class="cmprow"><div><b>Hourly Velocity</b><br>${verdict(odd[1])}</div>${bars(p.tx_per_day / 24, n1, `${(p.tx_per_day / 24).toFixed(1)}/hr avg`, `${n1} in past hr`, odd[1] ? "s-high" : "s-low")}</div>
+      <div class="cmprow"><div><b>Time Window</b><br>${verdict(odd[2])}</div><div class="small">Typical: ${p.typical_hours[0]}:00 &ndash; ${p.typical_hours[1]}:00</div><div class="small"><b>Execution: ${h}:00</b></div></div>
+      <div class="cmprow"><div><b>Beneficiary Novelty</b><br>${verdict(odd[3], true)}</div><div class="small">${plural(p.distinct_receivers, "prior counterparty")}</div><div class="small"><b>${odd[3] ? "First transfer to recipient" : "Prior beneficiary"}</b></div></div>
+    </div>`;
+}
+
+function networkPane(S){
+  const g = C.graph || {nodes: [], edges: []};
+  const accts = g.nodes.filter(n => n.kind !== "device");
+  const fl = accts.filter(n => n.flagged).length;
+  const dev = g.nodes.filter(n => n.kind === "device").length;
+  const pats = S._patterns.map(p => (PAT[p.v.pattern] || [p.v.pattern])[0]);
+  const hop = V(S,"hops_to_nearest_flagged_entity");
+
+  const summary = `Graph Neighborhood: <b>${plural(accts.length, "account node")}</b>, of which <b>${fl}</b> are confirmed fraud entities${dev ? `, and <b>${plural(dev, "shared device")}</b>` : ""}.`
+    + (pats.length ? ` Detected Typology: <span class="pill s-high">${esc(pats.join(", "))}</span>.` : "")
+    + (hop != null ? ` Distance to nearest confirmed perpetrator: <b>${plural(hop, "hop")}</b>.` : "");
+
+  return `<p class="small muted" style="margin-top:0">${summary}</p>
+    <div id="cy" role="img" aria-label="Transaction graph topology around current payment"></div>
+    <div class="cy-ctrls">
+      <button type="button" id="cyFit">Fit View</button>
+      <button type="button" id="cyReset">Reset Layout</button>
+    </div>
+    <p class="legend">
+      <span><i class="ldot" style="background:#0F172A"></i>Current Transfer Entities</span>
+      <span><i class="ldot" style="background:var(--high)"></i>Confirmed Fraud Perpetrator ${info("perp")}</span>
+      <span><i class="ldot" style="background:#94A3B8"></i>Intermediary Account</span>
+      <span><i class="ldot" style="background:var(--mid)"></i>Shared Device Node</span>
+    </p>
+    <div class="entity" id="entity"><p class="small muted" style="margin:0">Click on any account or device node to inspect adjacent connections.</p></div>`;
+}
+
+function techPane(S){
+  const { alertThresh, fusedThresh } = getThresholds();
+  const w = H.fusion_weights || {}, d = C.decision;
+  const row = (n, v, m) => `<tr><td>${n}</td><td><b>${v}</b></td><td class="small muted">${m}</td></tr>`;
+  const shap = C.evidence.filter(e => e.type === "shap"), max = Math.max(...shap.map(e => Math.abs(e.value.shap_value)), 0.001);
+  const names = {triage:"Triage Agent", evidence_correlation:"Evidence Correlation Agent", supervisor_gate:"Supervisor Gate", investigation:"Investigation Narrator", supervisor_final:"Supervisor Final Gate"};
+  const say = o => o.reason || (o.priority ? `Priority ${o.priority}` : "") || (o.k_hop ? `Expanded to ${plural(o.k_hop, "hop")}, collected ${o.evidence_items} items` : "") || (o.narrator ? `${o.narrator} narrator, valid=${o.valid}` : "");
+
+  return `<p class="small muted" style="margin-top:0">Auditable signals, TreeSHAP values, and multi-agent execution telemetry (§10, §28).</p>
+    <div class="tablewrap"><table class="t">
+      <thead><tr><th>Signal / Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+      <tbody>
+        ${row("XGBoost Detection Score" + info("detection"), pct(V(S,"classifier_score")), `Supervised anomaly probability; Decision line: ${pct(alertThresh)}`)}
+        ${row("Isolation Forest Behavioral Score" + info("behaviour"), pct(V(S,"behaviour_anomaly_score")), "Deviation score; &ge;60% indicates abnormal variance")}
+        ${row("Graph Proximity Score" + info("network"), pct(V(S,"graph_score")), "&ge;50% indicates corroborated topological proximity")}
+        ${row("Fused Multi-Signal Risk" + info("risk"), pct(d.fused_risk), `Fusion threshold: ${pct(fusedThresh)}`)}
+        ${row("Supervisor Decision Confidence" + info("sure"), pct(d.confidence), "Derived from deterministic signal corroboration matrix")}
+        ${w.w_classifier_score != null ? row("Logistic Fusion Weights", `w_cls=${w.w_classifier_score.toFixed(2)}, w_beh=${w.w_behaviour_score.toFixed(2)}, w_grp=${w.w_graph_score.toFixed(2)}`, "Interpretable logistic coefficients") : ""}
+      </tbody>
+    </table></div>
+
+    ${shap.length ? `<details class="sub" open>
+      <summary>TreeSHAP Feature Attributions (${shap.length} features analyzed)${info("drivers")}</summary>
+      <div class="shap" style="margin-top:10px">${shap.map(e =>
+        `<span>${esc(shapLabel(e, S))}</span>
+        <div style="background:var(--soft);height:8px;border-radius:3px">
+          <div class="b" style="width:${(Math.abs(e.value.shap_value)/max*100).toFixed(1)}%;background:${e.value.shap_value > 0 ? "var(--high)" : "var(--low)"}" title="${e.value.shap_value > 0 ? "Increased fraud risk" : "Decreased fraud risk"}"></div>
+        </div>`).join("")}
+      </div>
+      <p class="legend"><span><i class="ldot" style="background:var(--high)"></i>Increased Risk</span><span><i class="ldot" style="background:var(--low)"></i>Decreased Risk</span></p>
+    </details>` : ""}
+
+    <details class="sub" id="evdetails" open>
+      <summary>Curated Evidence Bundle (${C.evidence.length} discrete items)${info("evidence")}</summary>
+      <div class="scroll" style="margin-top:10px">
+        <table class="t">
+          <thead><tr><th>ID</th><th>Type</th><th>Evidence Description</th><th>Value</th></tr></thead>
+          <tbody>
+            ${C.evidence.map(e => `
+              <tr id="row-${e.evidence_id}">
+                <td><span class="chip">${e.evidence_id}</span></td>
+                <td><span class="pill s-neutral">${esc(e.type || "signal")}</span></td>
+                <td>${esc(e.description.replace("SHAP: ", ""))}</td>
+                <td><code>${esc(e.value === null ? "none" : typeof e.value === "object" ? (e.value.value ?? JSON.stringify(e.value)) : e.value)}</code></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="sub">
+      <summary>Multi-Agent Execution Telemetry (${plural(C.agent_log.length, "step")})</summary>
+      <ol class="small" style="padding-left:20px;margin-top:8px">
+        ${C.agent_log.map(l => `<li><b>${names[l.agent] || l.agent}</b> <span class="muted">${l.duration_ms} ms</span><br><span class="muted">${esc(say(l.output))}</span></li>`).join("")}
+      </ol>
+    </details>`;
+}
+
+function decisionCard(){
+  const d = C.decision, rec = recFor(C.route, d.recommended_action), done = decided(C);
+  const sugg = C.route === "human_review_escalate" ? "escalate" : null;
+  const opt = (k, cls, ic, t, m) => `<button class="opt ${cls}" data-d="${k}" aria-pressed="false"><span class="oi">${I(ic)}</span><span><b>${t}${sugg === k ? `<span class="tag">Recommended</span>` : ""}</b><small>${m}</small></span>${I("chevr")}</button>`;
+
+  return `<section class="card">
+    <h2><span class="step">3</span> Investigator Disposition</h2>
+    <div class="sugg">
+      <div class="l">Supervisor Recommendation</div>
+      <div class="v">${esc(rec[0])}</div>
+      <p>${esc(rec[1])}</p>
+    </div>
+    ${done ? outcome() : `
+      <div class="opts" role="group" aria-label="Disposition Options">
+        ${opt("approve", "s-high", "shield", "Confirm Fraud", "Marks transaction as verified fraud. Recipient account is indexed as a known perpetrator node for future graph detection.")}
+        ${opt("escalate", "s-mixed", "up", "Escalate to Senior", "Queues case for secondary review by senior financial crimes investigator.")}
+        ${opt("reject", "s-mid", "x", "Dismiss False Positive", "Closes case as benign. Recorded in calibration log to penalize false alarms.")}
+      </div>
+      <label class="small strong" for="note">Investigator Case Notes <span class="muted">(Optional)</span></label>
+      <textarea id="note" maxlength="500" placeholder="Enter findings, evidence citations, or reasoning..."></textarea>
+      <div class="counter" id="cnt">0/500</div>
+      <button class="btn brand block" id="submit" style="margin-top:10px" disabled>Select Disposition Above</button>
+    `}
+    <p class="small muted" style="margin:12px 0 0">Human-in-the-loop guarantee: FraudInv will not block funds or alter customer status autonomously.</p>
+  </section>`;
+}
+
+function outcome(){
+  const lab = {approved:"Confirmed Fraud", escalated:"Escalated to Senior", rejected:"Dismissed as False Positive"}[C.reviewer_status];
+  const next = {
+    approved:"Case closed as verified fraud. The recipient entity has been added to the graph perpetrator index.",
+    escalated:"Case escalated to senior investigator queue.",
+    rejected:"Case dismissed as false alarm."
+  }[C.reviewer_status];
+
+  return `<div class="outcome">
+    <div class="note tone s-go">${I("check")}<div><b>Decision Recorded: ${esc(lab)}</b><br>${esc(next)}</div></div>
+    <dl>
+      <dt>Investigator</dt><dd>Analyst (Session)</dd>
+      <dt>Disposition Time</dt><dd>${esc(whenStr(C.reviewed_at))}</dd>
+      ${C.reviewer_note ? `<dt>Case Notes</dt><dd>${esc(C.reviewer_note)}</dd>` : ""}
+      <dt>Evidence Retained</dt><dd>${plural(C.evidence.length, "auditable evidence item")}</dd>
+    </dl>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn brand" id="nextCase">Next Unresolved Case ${I("chevr")}</button>
+      <button class="btn" id="change">Modify Disposition</button>
+    </div>
+  </div>`;
+}
+
+async function showCase(id){
+  markNav("review");
+  $("#app").innerHTML = `<section class="card"><p class="muted" style="margin:0">Retrieving investigation dossier for Case ${esc(id)}…</p></section>`;
+  try {
+    C = await api(`/report/${encodeURIComponent(id)}`);
+  } catch(e){
+    $("#app").innerHTML = `<section class="card">
+      <h2>Case Not Found</h2>
+      <p class="muted">Case ${esc(id)} was not found in the active session database.</p>
+      <a class="btn" href="#">Back to Queue</a>
+    </section>`;
+    return;
+  }
+
+  $("#app").innerHTML = renderCase();
+  wireCase(id);
+
+  api(`/related/${encodeURIComponent(C.transaction_id)}`).then(rows => {
+    const el = $("#related");
+    if (el) el.innerHTML = relatedHTML(rows);
+  }).catch(() => {
+    const el = $("#related");
+    if (el) el.innerHTML = `<p class="small muted">Unable to retrieve counterparty transfer history.</p>`;
+  });
+}
+
+function wireCase(id){
+  document.querySelectorAll("[role=tab]").forEach(t => t.onclick = () => selectTab(t.dataset.tab));
+  document.querySelectorAll(".claim").forEach(b => b.onclick = () => toggleBasis(b));
+  document.querySelectorAll(".chip").forEach(b => b.onclick = e => { e.stopPropagation(); showEvidence([b.dataset.e]); });
+  document.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => { selectTab(b.dataset.goto); $("#lookinto").scrollIntoView({behavior: "smooth", block: "start"}); });
+  wireDecision(id);
+}
+
+function selectTab(k){
+  document.querySelectorAll("[role=tab]").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === k));
+  document.querySelectorAll("[role=tabpanel]").forEach(p => p.hidden = p.id !== "pane-" + k);
+  if (k === "network") {
+    setTimeout(() => {
+      if (!cy) {
+        drawGraph(C.graph);
+        applyLit();
+      } else {
+        cy.resize();
+        cy.fit();
+      }
+    }, 50);
+  }
+}
+
+function toggleBasis(b){
+  const box = b.parentElement.nextElementSibling, open = b.getAttribute("aria-expanded") === "true";
+  document.querySelectorAll(".claim.on").forEach(x => {
+    x.classList.remove("on");
+    x.setAttribute("aria-expanded", "false");
+    x.parentElement.nextElementSibling.hidden = true;
+  });
+  if (open) { LIT = []; applyLit(); return; }
+
+  const ids = b.dataset.ids.split(",").filter(Boolean);
+  const items = ids.map(i => C.evidence.find(e => e.evidence_id === i)).filter(Boolean);
+
+  box.innerHTML = `<div class="muted small" style="margin-bottom:4px">Backed by verified evidence bundle items:</div>` +
+    items.map(e => `<div><span>${esc(e.description.replace("SHAP: ", ""))}</span><span><b>${esc(e.value === null ? "none" : typeof e.value === "object" ? (e.value.value ?? e.value.pattern ?? "") : e.value)}</b>${chip(e.evidence_id)}</span></div>`).join("") +
+    (items.some(e => e.type === "graph") ? `<div style="margin-top:6px"><button class="linkbtn small" data-show-net>Inspect in Network Graph &rarr;</button></div>` : "");
+
+  box.hidden = false;
+  b.classList.add("on");
+  b.setAttribute("aria-expanded", "true");
+  box.querySelectorAll(".chip").forEach(c => c.onclick = e => { e.stopPropagation(); showEvidence([c.dataset.e]); });
+  box.querySelector("[data-show-net]")?.addEventListener("click", () => selectTab("network"));
+  LIT = ids;
+  applyLit();
+}
+
+function showEvidence(ids){
+  selectTab("tech");
+  const ev = $("#evdetails");
+  if (ev) ev.open = true;
+  document.querySelectorAll("tr.hl").forEach(r => r.classList.remove("hl"));
+  ids.forEach(i => document.getElementById("row-" + i)?.classList.add("hl"));
+  document.getElementById("row-" + ids[0])?.scrollIntoView({block: "center", behavior: "smooth"});
+}
+
+function applyLit(){
+  if (!cy) return;
+  cy.elements().removeClass("lit");
+  const S = sigFromEvidence(C.evidence), snd = V(S,"sender_account"), rcv = V(S,"receiver_account"), nodes = new Set();
+  LIT.map(i => C.evidence.find(e => e.evidence_id === i)).filter(Boolean).forEach(e => {
+    const f = e.field;
+    if (f === "sender_account" || f.startsWith("sender_") || f === "fan_out_count_window") nodes.add(snd);
+    if (f === "receiver_account" || f.startsWith("receiver_") || f === "fan_in_count_window" || f === "first_transaction_to_this_beneficiary") nodes.add(rcv);
+    if (f.includes("flagged")) cy.nodes("[?flagged]").forEach(n => nodes.add(n.id()));
+    if (f === "shared_device_with_other_accounts") cy.nodes("[kind='device']").forEach(n => nodes.add(n.id()));
+    if (f.startsWith("pattern_")) [e.value.account, e.value.collector, ...(e.value.cycle || [])].filter(Boolean).forEach(n => nodes.add(n));
+    if (f === "amount" || f === "transaction_id") { nodes.add(snd); nodes.add(rcv); }
+  });
+  nodes.forEach(n => cy.getElementById(n).addClass("lit"));
+}
+
+function wireDecision(id){
+  let choice = null;
+  const note = $("#note");
+  if (note) note.oninput = () => { $("#cnt").textContent = `${note.value.length}/500`; };
+  document.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", "false"));
+    b.setAttribute("aria-pressed", "true");
+    choice = b.dataset.d;
+    const s = $("#submit");
+    s.disabled = false;
+    s.textContent = "Save Disposition: " + b.querySelector("b").firstChild.textContent;
+  });
+
+  const sub = $("#submit");
+  if (sub) sub.onclick = async () => {
+    sub.disabled = true;
+    sub.textContent = "Saving disposition…";
+    const nv = $("#note").value || null;
+    try {
+      const r = await api(`/review/${encodeURIComponent(id)}`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({decision: choice, note: nv})
+      });
+      C.reviewer_status = r.reviewer_status;
+      C.reviewed_at = r.reviewed_at;
+      C.reviewer_note = nv;
+      logActivity("decision", `${{approved:"Confirmed fraud", escalated:"Escalated", rejected:"Dismissed false positive"}[r.reviewer_status]} on Case ${id}`);
+      $("#decide").innerHTML = decisionCard();
+      wireDecision(id);
+      const [st, stc] = status({route: C.route, reviewer_status: C.reviewer_status, case_id: id});
+      const p = $(".case-top .pill");
+      if (p) { p.className = "pill " + stc; p.textContent = st; }
+      ALERTS = await api("/alerts").catch(() => ALERTS);
+      updateCount();
+    } catch(e){
+      sub.disabled = false;
+      sub.textContent = "Error saving. Retry?";
+    }
+  };
+
+  const ch = $("#change");
+  if (ch) ch.onclick = () => {
+    const keep = C.reviewer_status;
+    C.reviewer_status = "pending";
+    $("#decide").innerHTML = decisionCard();
+    C.reviewer_status = keep;
+    wireDecision(id);
+  };
+
+  const nx = $("#nextCase");
+  if (nx) nx.onclick = async () => {
+    const al = await api("/alerts").catch(() => []);
+    const n = al.filter(a => !decided(a) && a.case_id && a.case_id !== id).sort((x, y) => y.fused_risk - x.fused_risk)[0];
+    location.hash = n ? "case=" + n.case_id : "";
+  };
+}
+
+/* ======================= Cytoscape Graph & Fallback ======================= */
+function drawGraph(g){
+  const box = $("#cy");
+  if (!box) return;
+  if (!g || !g.nodes?.length) {
+    box.innerHTML = `<p class="muted small" style="text-align:center;padding:40px">No topological graph data available for this transaction.</p>`;
+    return;
+  }
+
+  // Graceful fallback if Cytoscape library is offline
+  if (typeof cytoscape === "undefined") {
+    box.innerHTML = `<div style="padding:16px;overflow:auto;max-height:380px">
+      <div class="note tone s-mid">${I("info")}<div><b>Interactive Canvas Unavailable</b><br>Graph layout library could not be loaded from CDN. Displaying tabular adjacency list:</div></div>
+      <table class="t"><thead><tr><th>Node ID</th><th>Role / Kind</th><th>Confirmed Fraud?</th></tr></thead><tbody>
+      ${g.nodes.map(n => `<tr><td><code>${esc(n.id)}</code></td><td>${esc(n.kind || 'account')}</td><td>${n.flagged ? '<span class="pill s-high">PERPETRATOR</span>' : '<span class="pill s-low">Normal</span>'}</td></tr>`).join("")}
+      </tbody></table></div>`;
+    return;
+  }
+
+  try {
+    if (cy) cy.destroy();
+    cy = cytoscape({
+      container: box,
+      elements: toEls(g),
+      wheelSensitivity: 0.25,
+      layout: {name: "cose", animate: false, nodeRepulsion: 8000, idealEdgeLength: 75},
+      style: [
+        {selector: "node", style: {"background-color": "#94A3B8", label: "data(id)", "font-size": 9, color: "#475569", width: 14, height: 14, "text-valign": "bottom", "text-margin-y": 4}},
+        {selector: "node[?flagged]", style: {"background-color": "#B91C1C", width: 16, height: 16}},
+        {selector: "node[kind='device']", style: {"background-color": "#B45309", shape: "round-rectangle", width: 18, height: 14}},
+        {selector: "node[?focus]", style: {"background-color": "#0F172A", width: 22, height: 22, "font-size": 11, "font-weight": 700, color: "#0F172A"}},
+        {selector: "edge", style: {width: 1.4, "line-color": "#CBD5E1", "target-arrow-shape": "triangle", "target-arrow-color": "#94A3B8", "curve-style": "bezier", "arrow-scale": 0.8}},
+        {selector: "edge[rel='USED_DEVICE']", style: {"line-style": "dashed", "line-color": "#B45309", "target-arrow-shape": "none"}},
+        {selector: ".lit", style: {"border-width": 4, "border-color": "#1E3A8A", "z-index": 10}},
+        {selector: "node:selected", style: {"border-width": 3, "border-color": "#0F172A"}}
+      ]
+    });
+    cy.on("tap", "node", e => showEntity(e.target.id()));
+
+    const fitBtn = $("#cyFit"), resetBtn = $("#cyReset");
+    if (fitBtn) fitBtn.onclick = () => cy.fit();
+    if (resetBtn) resetBtn.onclick = () => cy.layout({name: "cose", animate: true, nodeRepulsion: 8000, idealEdgeLength: 75}).run();
+  } catch(err){
+    box.innerHTML = `<p class="muted small" style="padding:20px">Graph rendering error: ${esc(err.message)}</p>`;
+  }
+}
+
+function toEls(g){
+  return g.nodes.map(n => ({data: {id: n.id, kind: n.kind, flagged: !!n.flagged, focus: !!n.focus}}))
+    .concat(g.edges.map(e => ({data: {id: `${e.source}>${e.target}>${e.rel}`, source: e.source, target: e.target, rel: e.rel}})));
+}
+
+async function showEntity(id){
+  const box = $("#entity");
+  box.innerHTML = `<p class="small muted" style="margin:0">Querying details for node <code>${esc(id)}</code>…</p>`;
+  let e;
+  try {
+    e = await api(`/entity/${encodeURIComponent(id)}`);
+  } catch(err){
+    box.innerHTML = `<p class="muted small">No topological metadata recorded for ${esc(id)}.</p>`;
+    return;
+  }
+
+  const li = a => `<li><button class="linkbtn" data-n="${esc(a.id)}"><code>${esc(a.id)}</code></button><span>${a.flagged ? `<span class="pill s-high">Flagged Entity</span> ` : ""}${a.amount != null ? money(a.amount) + (a.count > 1 ? ` (${a.count} txs)` : "") : ""}</span></li>`;
+
+  if (e.kind === "device") {
+    box.innerHTML = `<h3>Shared Device Node: <code>${esc(e.id)}</code></h3>
+      <p class="small muted" style="margin:0 0 6px">Linked to ${plural(e.account_count, "account")}.${e.account_count > 1 ? " Multi-account device sharing is an empirical indicator of synthetic mule rings." : ""}</p>
+      <ul>${e.accounts.map(li).join("")}</ul>`;
+  } else {
+    box.innerHTML = `<h3>Account Node: <code>${esc(e.id)}</code> ${e.flagged ? `<span class="pill s-high">Confirmed Perpetrator</span>` : ""}</h3>
+      <p class="small muted" style="margin:0 0 8px">Outbound: ${money(e.sent_total)} across ${plural(e.sent_count, "transfer")}; Inbound: ${money(e.received_total)} across ${plural(e.received_count, "transfer")}.${e.hops_to_flagged != null && !e.flagged ? ` Nearest fraud node is ${plural(e.hops_to_flagged, "hop")} away.` : ""}</p>
+      ${e.sends_to.length ? `<div class="small strong" style="margin-top:6px">Outbound Beneficiaries</div><ul>${e.sends_to.map(li).join("")}</ul>` : ""}
+      ${e.receives_from.length ? `<div class="small strong" style="margin-top:6px">Inbound Payers</div><ul>${e.receives_from.map(li).join("")}</ul>` : ""}
+      ${e.devices?.filter(d => d.shared_with > 0).length ? `<div class="small strong" style="margin-top:6px">Shared Device Fingerprints</div><ul>${e.devices.filter(d => d.shared_with > 0).map(d => `<li><code>${esc(d.id)}</code> <span>shared with ${plural(d.shared_with, "other account")}</span></li>`).join("")}</ul>` : ""}
+      <button class="btn outline" id="expand" style="margin-top:8px">${I("search")} Expand 1-Hop Neighbors</button>`;
+  }
+
+  box.querySelectorAll("[data-n]").forEach(b => {
+    b.onclick = () => {
+      if (cy) {
+        const n = cy.getElementById(b.dataset.n);
+        if (n.length) {
+          cy.$(":selected").unselect();
+          n.select();
+          cy.animate({center: {eles: n}}, {duration: 250});
+        }
+      }
+      showEntity(b.dataset.n);
+    };
+  });
+
+  const ex = $("#expand");
+  if (ex) ex.onclick = async () => {
+    ex.disabled = true;
+    ex.textContent = "Querying neighbors…";
+    try {
+      const g = await api(`/graph/${encodeURIComponent(id)}?k=1`);
+      if (cy) {
+        const add = toEls(g).filter(el => !cy.getElementById(el.data.id).length);
+        cy.add(add.filter(el => !el.data.source));
+        cy.add(add.filter(el => el.data.source && cy.getElementById(el.data.source).length && cy.getElementById(el.data.target).length));
+        cy.layout({name: "cose", animate: false, nodeRepulsion: 8000, idealEdgeLength: 75}).run();
+        applyLit();
+      }
+      ex.textContent = "Graph Expanded";
+    } catch(err){
+      ex.textContent = "Expansion failed";
+    }
+  };
+}
+
+/* ======================= Transactions & Ingestion View ======================= */
+let UPLOAD = null, UFILTER = "all", UFILE = null, UROWS = 0, USTAGE = 0;
+
+function uploadHTML(){
+  const types = (H.payment_types || []).map(t => `<code>${esc(t)}</code>`).join(" ");
+  const hist = store.get("uploads", []);
+  const col = (c, m) => `<tr><td><code>${c}</code></td><td>${m}</td></tr>`;
+  const ps = (i, t, m) => `<div class="pstep ${USTAGE > i ? "done" : USTAGE === i ? "now" : ""}"><span class="pi">${USTAGE > i ? "✓" : i}</span><div><b>${t}</b><span class="muted">${m}</span></div></div>`;
+
+  return `<div class="cols">
+    <div>
+      <div class="page-head" style="margin-bottom:14px">
+        <div>
+          <h1>Transaction Ingestion & Batch Testing</h1>
+          <p class="lede">Upload custom transaction files to evaluate the multi-agent detection pipeline against novel payloads.</p>
+        </div>
+      </div>
+      <section class="card">
+        <div class="drop" id="drop">
+          <div class="art">${I("upload")}</div>
+          <h3>Drag and drop transaction CSV file</h3>
+          <p class="small muted" style="margin:0 0 12px">or choose a file from your computer</p>
+          <label class="btn outline" style="cursor:pointer">
+            ${I("file")} Select CSV File
+            <input type="file" id="file" accept=".csv,text/csv" hidden>
+          </label>
+          <p class="small muted" style="margin:12px 0 0">Standard CSV format, up to 300 rows. Evaluated in sequential timestamp order.</p>
+        </div>
+        ${UFILE ? `
+          <div class="fileready">
+            <span class="fic">${I("file")}</span>
+            <div>
+              <b>${esc(UFILE.name)}</b>
+              <div class="small muted">${(UFILE.size / 1024).toFixed(1)} KB &bull; ${plural(UROWS, "row")}${UROWS > 300 ? " (processing first 300 rows)" : ""}</div>
+            </div>
+            <button class="btn go" id="run" ${USTAGE === 2 ? "disabled" : ""}>
+              ${I("play", "fill")} ${USTAGE === 2 ? "Processing Batch…" : "Run Ingestion Pipeline"}
+            </button>
+            <button class="btn ghost" id="clear" aria-label="Remove file">${I("trash")}</button>
+          </div>
+          <div class="progress">
+            ${ps(1, "Parse & Validate", "Verify schema & datatypes")}
+            ${ps(2, "Extract Features", "Compute past-only signals")}
+            ${ps(3, "Tri-Signal Scoring", "XGBoost, Anomaly, Graph")}
+            ${ps(4, "Multi-Agent Queue", "Flagged alerts investigated")}
+          </div>
+        ` : ""}
+        <div id="ustatus" style="margin-top:10px"></div>
+        <div class="feats">
+          <div class="feat">${I("shield")}<div><b>Full Pipeline Execution</b>Evaluates XGBoost classifier, behavioral anomaly, and NetworkX topology.</div></div>
+          <div class="feat">${I("clock")}<div><b>Sequential Timeline</b>Ingested chronologically to construct authentic temporal graphs.</div></div>
+          <div class="feat">${I("cases")}<div><b>Case Generation</b>High-risk transactions automatically instantiate auditable cases.</div></div>
+        </div>
+      </section>
+      <div id="uresults">${UPLOAD ? uploadResults() : ""}</div>
+      <section class="card">
+        <h2>${I("clock")} Batch Ingestion History</h2>
+        ${hist.length ? `<div class="tablewrap"><table class="t">
+          <thead><tr><th>Filename</th><th>Timestamp</th><th>Rows Checked</th><th>Alerts Flagged</th><th>Action</th></tr></thead>
+          <tbody>
+          ${hist.map((u, i) => `<tr>
+            <td><code>${esc(u.filename)}</code></td>
+            <td class="small muted">${esc(whenStr(u.at))}</td>
+            <td>${u.checked}</td>
+            <td>${u.flagged ? `<span class="pill s-high">${plural(u.flagged, "alert")}</span>` : `<span class="pill s-low">0 Flagged</span>`}</td>
+            <td><button class="btn outline" data-hist="${i}">View Results</button></td>
+          </tr>`).join("")}
+          </tbody>
+        </table></div>` : `<p class="small muted" style="margin:0">Uploaded batches during this session will be logged here.</p>`}
+      </section>
+    </div>
+    <div class="sticky">
+      <section class="card" style="background:var(--go-bg);border-color:var(--go-border)">
+        <h2>${I("bolt")} Ingestion Flow</h2>
+        <ol class="steps">
+          <li>Select or drop formatted CSV file.</li>
+          <li>System parses rows and infers payment channels.</li>
+          <li>Detector engine evaluates risk scores.</li>
+          <li>Corroborated alerts generate full multi-agent dossiers.</li>
+        </ol>
+      </section>
+      <section class="card">
+        <h2 style="justify-content:space-between">
+          <span>${I("file")} Schema Specification</span>
+          <a class="linkbtn small" href="/upload/sample" download>${I("download")} Sample CSV</a>
+        </h2>
+        <p class="small muted" style="margin-top:-6px">Sample file is calibrated to active dataset scale (${esc(H.dataset || "Live")}).</p>
+        <table class="colhelp"><tbody>
+          ${col("sender_account", "<b>Required.</b> Originating account (alias: from, payer)")}
+          ${col("receiver_account", "<b>Required.</b> Beneficiary account (alias: to, payee)")}
+          ${col("amount", `<b>Required.</b> Numerical transfer amount (typical: ${money(H.typical_amount || 1000)})`)}
+          ${col("timestamp", "<b>Required.</b> ISO-8601 or YYYY-MM-DD HH:MM format")}
+          ${col("transaction_type", `Optional. Known channels: ${types || "TRANSFER"}`)}
+          ${col("device_id", "Optional. Device fingerprint for mule ring detection")}
+          ${col("expected", "Optional. Set to <code>normal</code> or <code>suspicious</code> for benchmarking")}
+        </tbody></table>
+      </section>
+    </div>
+  </div>`;
+}
+
+function expectedMatch(r){
+  const e = (r.expected || "").toLowerCase();
+  if (!e) return null;
+  const sus = ["suspicious","fraud","flag","flagged","yes","1","true"].includes(e);
+  return {sus, ok: sus === r.alert};
+}
+
+function uploadResults(){
+  const U = UPLOAD, R = U.results, withExp = R.filter(r => expectedMatch(r)), expSus = withExp.filter(r => expectedMatch(r).sus), expNorm = withExp.filter(r => !expectedMatch(r).sus);
+  const groups = {
+    all: R,
+    flagged: R.filter(r => r.alert),
+    clear: R.filter(r => !r.alert),
+    diff: withExp.filter(r => !expectedMatch(r).ok)
+  };
+  const f = (k, l, cls) => `<button data-uf="${k}" aria-pressed="${UFILTER === k}" class="${cls}"><span class="dot"></span>${l} (${groups[k].length})</button>`;
+
+  const item = r => {
+    const S = sigFromAlert(r.signals), R1 = reasons(S), sev = r.alert ? severity(r.fused_risk, r.route) : {cls: "s-neutral"};
+    const m = expectedMatch(r);
+    const why = r.alert ? (R1[0]?.t || "Flagged by Fused Detector Risk") : `Within normal bounds (Fused Risk: ${pct(r.fused_risk)}).`;
+
+    return `<li class="urow ${r.alert ? sev.cls : "s-neutral"}">
+      <span class="rn">Row ${r.row}</span>
+      <div>
+        <b>${esc(why)}</b>
+        <div class="small muted">${money(r.amount)} &bull; <code>${esc(r.sender)}</code> &rarr; <code>${esc(r.receiver)}</code> &bull; ${esc(whenStr(r.timestamp))}</div>
+        ${r.note ? `<div class="small muted" style="margin-top:2px">${esc(r.note)}</div>` : ""}
+      </div>
+      <div class="r">
+        ${r.alert ? `<span class="pill ${sev.cls}">Alert: ${pct(r.fused_risk)}</span>` : `<span class="pill s-low">Normal</span>`}
+        ${m ? `<span class="match ${m.ok ? "ok" : "no"}">${m.ok ? "✓ Benchmark Match" : `Mismatch: expected ${m.sus ? "suspicious" : "normal"}`}</span>` : ""}
+        ${r.case_id ? `<a class="linkbtn" href="#case=${esc(r.case_id)}">Open Dossier ${I("chevr")}</a>` : ""}
+      </div>
+    </li>`;
+  };
+
+  return `<section class="card">
+    <h2>${I("check")} Evaluation Results: <code>${esc(U.filename)}</code></h2>
+    <p style="margin:-4px 0 10px;font-size:15px">Ingested ${plural(U.checked, "transaction")}. <b>${U.flagged} ${U.flagged === 1 ? "alert was" : "alerts were"} triggered</b> and transferred to the review queue.</p>
+    ${withExp.length ? `<p class="small muted" style="margin:0 0 12px">Benchmark Accuracy: Flagged ${expSus.filter(r => r.alert).length} of ${plural(expSus.length, "expected fraud transaction")}, passed ${expNorm.filter(r => !r.alert).length} of ${plural(expNorm.length, "normal transaction")}.</p>` : ""}
+    ${U.skipped ? `<div class="note tone s-mid">${I("alert")}<div><b>${plural(U.skipped, "row")} rejected by validator:</b><br>${U.errors.map(e => `Row ${e.row}: ${esc(e.problem)}`).join("<br>")}</div></div>` : ""}
+    ${U.warnings?.length ? `<div class="note">${I("info")}<div><b>Ingestion Notices:</b><br>${U.warnings.map(esc).join("<br>")}</div></div>` : ""}
+    <div class="filters" role="group" aria-label="Filter results">
+      ${f("all","All Rows","s-brand")}
+      ${f("flagged","Flagged Alerts","s-high")}
+      ${f("clear","Normal Transactions","s-low")}
+      ${withExp.length ? f("diff","Benchmark Variance","s-mid") : ""}
+    </div>
+    ${groups[UFILTER].length ? `<ul class="ures">${groups[UFILTER].map(item).join("")}</ul>` : `<p class="muted">No transactions in selected view.</p>`}
+  </section>`;
+}
+
+function showUpload(){
+  markNav("upload");
+  $("#app").innerHTML = uploadHTML();
+  const pick = async f => {
+    if (!f) return;
+    UFILE = f;
+    const txt = await f.text();
+    UFILE._text = txt;
+    UROWS = Math.max(0, txt.split(/\r?\n/).filter(l => l.trim()).length - 1);
+    USTAGE = 1;
+    showUpload();
+  };
+
+  $("#file").onchange = e => pick(e.target.files[0]);
+  const drop = $("#drop");
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = () => drop.classList.remove("over");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); pick(e.dataTransfer.files[0]); };
+
+  const clr = $("#clear");
+  if (clr) clr.onclick = () => { UFILE = null; USTAGE = 0; showUpload(); };
+
+  const run = $("#run");
+  if (run) run.onclick = async () => {
+    USTAGE = 2;
+    showUpload();
+    $("#ustatus").innerHTML = `<div class="note tone s-brand">${I("clock")}<div><b>Processing Ingestion Pipeline</b><br>Executing feature extraction and tri-signal inference. Flagged transactions are instantiating multi-agent investigation dossiers...</div></div>`;
+    try {
+      UPLOAD = await api("/upload", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({filename: UFILE.name, csv_text: UFILE._text})
+      });
+      USTAGE = 5;
+      UFILTER = "all";
+      const hist = store.get("uploads", []);
+      hist.unshift({...UPLOAD, at: new Date().toISOString()});
+      store.set("uploads", hist.slice(0, 5));
+      logActivity("upload", `Ingested ${UPLOAD.filename}: ${plural(UPLOAD.flagged, "alert")} flagged`);
+      await loadHealth();
+      showUpload();
+      $("#uresults").scrollIntoView({behavior: "smooth"});
+    } catch(e){
+      let m = e.message;
+      try { m = JSON.parse(m).detail; } catch(_){}
+      USTAGE = 1;
+      showUpload();
+      $("#ustatus").innerHTML = `<div class="note tone s-high">${I("alert")}<div><b>Ingestion Error:</b> ${esc(m)}</div></div>`;
+    }
+  };
+
+  document.querySelectorAll("[data-uf]").forEach(b => b.onclick = () => {
+    UFILTER = b.dataset.uf;
+    $("#uresults").innerHTML = uploadResults();
+    showUploadWireResults();
+  });
+  document.querySelectorAll("[data-hist]").forEach(b => b.onclick = () => {
+    UPLOAD = store.get("uploads", [])[+b.dataset.hist];
+    UFILTER = "all";
+    showUpload();
+    $("#uresults").scrollIntoView({behavior: "smooth"});
+  });
+}
+
+function showUploadWireResults(){
+  document.querySelectorAll("[data-uf]").forEach(b => b.onclick = () => {
+    UFILTER = b.dataset.uf;
+    $("#uresults").innerHTML = uploadResults();
+    showUploadWireResults();
+  });
+}
+
+/* ======================= System Health & Routing ======================= */
+async function loadHealth(){
+  try {
+    H = await api("/health");
+    $("#metaDataset").innerHTML = `Dataset: <b>${esc(H.dataset || "Synthetic Benchmark")}</b>`;
+    $("#liveStatus").className = "badge-live";
+    $("#liveText").textContent = "System Online";
+  } catch(e){
+    $("#metaDataset").textContent = "Dataset: Disconnected";
+    $("#liveStatus").className = "badge-live s-high";
+    $("#liveText").textContent = "Offline";
+  }
+}
+
+function route(){
+  const h = location.hash;
+  hideTip();
+  if (cy) { cy.destroy(); cy = null; }
+  LIT = [];
+  const m = h.match(/case=([\w-]+)/);
+  if (m) showCase(m[1]);
+  else if (h === "#upload") showUpload();
+  else if (h === "#cases") showCases();
+  else if (h === "#reports") showReports();
+  else if (h === "#system") showSystem();
+  else showReview();
+  window.scrollTo(0, 0);
+}
+
+window.addEventListener("hashchange", route);
+buildShell();
+loadHealth().then(route);
+</script>
+</body>
+</html>

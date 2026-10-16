@@ -1,0 +1,16 @@
+variant,transaction_id,fraud,pattern,route,valid,grounding_rate,claims,coverage,attempts,seconds
+full,TX-01314329,1,laundering_unclassified,human_review_needs_more_evidence,True,1.0,10,0.6666666666666666,1,5.102029921999929
+full,TX-01317355,1,laundering_unclassified,human_review_escalate,True,1.0,15,0.75,1,3.8997683149998466
+full,TX-01343474,1,stack,human_review_needs_more_evidence,True,1.0,9,0.75,1,16.19388516899994
+full,TX-01374838,0,normal,human_review_needs_more_evidence,True,1.0,8,0.6666666666666666,1,30.913896516999785
+full,TX-01427873,0,normal,human_review_needs_more_evidence,True,1.0,11,0.6666666666666666,1,28.672024446000023
+full,TX-01437327,0,normal,human_review_needs_more_evidence,True,1.0,7,0.6666666666666666,1,27.393153818999963
+full,TX-01439594,0,normal,human_review_raw_evidence,False,,0,0.0,0,1.2398815949998152
+full,TX-01448737,0,normal,human_review_needs_more_evidence,True,1.0,7,0.6666666666666666,1,26.671036104999985
+full,TX-01448781,0,normal,human_review_needs_more_evidence,True,1.0,12,0.6666666666666666,1,24.171256503999984
+full,TX-01460126,1,laundering_unclassified,human_review_raw_evidence,False,,0,0.0,0,0.9356114970000817
+full,TX-01467618,1,laundering_unclassified,human_review_escalate,True,1.0,12,1.0,1,24.8621238369999
+full,TX-01479726,1,laundering_unclassified,human_review_needs_more_evidence,True,1.0,9,0.6666666666666666,1,27.981362813000032
+full,TX-01486589,0,normal,human_review_raw_evidence,False,,0,0.0,0,0.6753504859998429
+full,TX-01489783,1,cycle,human_review_needs_more_evidence,True,1.0,12,0.6666666666666666,1,26.92938682299996
+full,TX-01489810,1,gather_scatter,human_review_raw_evidence,False,,0,0.0,0,0.06843828299997767

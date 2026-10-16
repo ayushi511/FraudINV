@@ -1,0 +1,3 @@
+| variant   |   cases |   valid_report_rate |   mean_grounding_rate |   mean_claims |   mean_evidence_coverage |   escalate_precision |   fraud_escalated_recall |   raw_route_rate |   p50_seconds |   p95_seconds |
+|:----------|--------:|--------------------:|----------------------:|--------------:|-------------------------:|---------------------:|-------------------------:|-----------------:|--------------:|--------------:|
+| full      |  15.000 |               0.733 |                 1.000 |         7.467 |                    0.522 |                1.000 |                    0.250 |            0.267 |        24.171 |        29.345 |

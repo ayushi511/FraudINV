@@ -1,0 +1,502 @@
+item_id,text,decision,confidence_1to5,usefulness_1to5,correctness_1to5,completeness_1to5,grounding_1to5,readability_1to5
+R001,"Case ID: C-A9118746        Risk Level: LOW
+Transaction ID: TX-01437327   Fused risk: 0.13   Priority: P2
+
+ALERT REASON:
+  High fraud probability indicated by the XGBoost classifier  [E8]
+
+TRANSACTION SUMMARY:
+  Transaction TX-01437327 of $1026.7 ACH from account 11222_8023056B0 to account 15680_802304AB0 at 2022-09-10 02:03  [E1, E2, E3, E4, E5, E6]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount equals the sender's historical average (ratio 1.0) with a zero z‑score; only one transaction in the last hour and one in the last 10 minutes; occurred at hour 2 of the day  [E17, E18, E19, E20, E21]
+
+NETWORK FINDINGS (observed):
+  - Graph analysis shows no suspicious connections: graph suspicion score 0, neither sender nor receiver flagged, no flagged accounts within three hops, no shared devices, and no fan‑in/fan‑out activity in the recent window  [E10, E23, E24, E25, E26, E27, E28, E29, E30]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - SHAP contributions: ACH type (+2.1614), zero prior transactions (+0.7375) and first transfer to this beneficiary (+0.5469) increase risk; distinct receivers (-0.6546) and no prior transfers to beneficiary (+0.532) also affect the score  [E12, E13, E14, E15, E16]
+
+INFERENCE (reasoning, not fact):
+  - The high classifier score drives a notable fused risk, but behavioural anomaly is low and graph risk is zero, resulting in a modest overall fused risk  [E8, E9, E10, E11, E36]
+
+INSUFFICIENT EVIDENCE:
+  - Lack of contextual information such as customer intent, business purpose of the transfer, and external verification of the beneficiary
+
+CONFIDENCE: 0.13 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Given the modest fused risk and limited corroborating signals, additional evidence is needed before a definitive fraud determination can be made  [E11, E35, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R032,"TRANSACTION FACTS:
+  Transaction ID: TX-01448781
+  Timestamp: 2022-09-10 06:51:00
+  Amount: 1032.92
+  Sender account: 11305_81447F070
+  Receiver account: 11305_814445AC0
+  Transaction type: ACH
+  Device ID: DEV_11305_81447F070
+
+MODEL SCORES:
+  Fused risk: 14.61%
+  Detection score: 98.73%
+  Behaviour score: 2.66%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +2.0818)
+  - sender_prior_tx_count: increases risk (SHAP +0.7768)
+  - sender_distinct_receivers: decreases risk (SHAP -0.5966)
+  - beneficiary_frequency: increases risk (SHAP +0.5360)
+  - new_beneficiary: increases risk (SHAP +0.5004)",,,,,,,
+R030,"Case ID: C-FDB5C24A        Risk Level: LOW
+Transaction ID: TX-01479726   Fused risk: 0.17   Priority: P2
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.99.  [E8]
+
+TRANSACTION SUMMARY:
+  ACH of 2,625.86 from 15461_8020047D0 to 14_802008CA0 at 2022-09-10 19:52; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E31]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 1.00x the sender's historical average (behaviour anomaly score 0.09).  [E17, E9]
+
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.99; fused risk 0.17 (learned fusion).  [E8, E11]
+  - 'type_ach' raised the score (value 1.00).  [E12]
+  - 'sender's prior transaction count' raised the score (value 0.00).  [E13]
+  - 'distinct receivers the sender has paid' lowered the score (value 1.00).  [E14]
+
+
+INSUFFICIENT EVIDENCE:
+  - No network evidence links this transaction to known suspicious entities.
+
+CONFIDENCE: 0.17 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk 0.17 with 2 corroborating evidence types; a human investigator must make the final decision.  [E11, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R003,"Case ID: C-2D971D08        Risk Level: LOW
+Transaction ID: TX-01317355   Fused risk: 0.28   Priority: P1
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.99, graph suspicion score 0.74.  [E8, E10]
+
+TRANSACTION SUMMARY:
+  Cheque of 28,266.67 from 70_10042B6F0 to 110682_80BCA0DD0 at 2022-09-09 09:53; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E32]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 0.05x the sender's historical average (behaviour anomaly score 0.00).  [E17, E9]
+
+NETWORK FINDINGS (observed):
+  - The sender was identified as a perpetrator in a previous case.  [E24]
+  - The receiver is within 2 hops of 1 previously flagged accounts.  [E25, E22]
+  - AML typology 'fan_out' detected: 15 distinct receivers from one account.  [E31]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.99; fused risk 0.28 (learned fusion).  [E8, E11]
+  - 'distinct receivers the sender has paid' raised the score (value 41.00).  [E12]
+  - 'sender transactions in the last hour' raised the score (value 1.00).  [E13]
+  - 'first transfer to this beneficiary' raised the score (value 1.00).  [E14]
+
+
+CONFIDENCE: 0.28 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: escalate_for_review  -  Fused risk 0.28 with 3 corroborating evidence types; a human investigator must make the final decision.  [E11, E37]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R017,"TRANSACTION FACTS:
+  Transaction ID: TX-01314329
+  Timestamp: 2022-09-09 09:29:00
+  Amount: 2324.65
+  Sender account: 12202_817DF6090
+  Receiver account: 24562_817DF7550
+  Transaction type: ACH
+  Device ID: DEV_12202_817DF6090
+
+MODEL SCORES:
+  Fused risk: 17.56%
+  Detection score: 98.96%
+  Behaviour score: 1.69%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +2.1465)
+  - sender_prior_tx_count: increases risk (SHAP +0.7739)
+  - sender_distinct_receivers: decreases risk (SHAP -0.7134)
+  - new_beneficiary: increases risk (SHAP +0.5447)
+  - beneficiary_frequency: increases risk (SHAP +0.5173)",,,,,,,
+R010,"Case ID: C-F2CD04BE        Risk Level: LOW
+Transaction ID: TX-01437327   Fused risk: 0.13   Priority: P2
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.98.  [E8]
+
+TRANSACTION SUMMARY:
+  ACH of 1,026.70 from 11222_8023056B0 to 15680_802304AB0 at 2022-09-10 02:03; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E31]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 1.00x the sender's historical average (behaviour anomaly score 0.03).  [E17, E9]
+
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.98; fused risk 0.13 (learned fusion).  [E8, E11]
+  - 'type_ach' raised the score (value 1.00).  [E12]
+  - 'sender's prior transaction count' raised the score (value 0.00).  [E13]
+  - 'distinct receivers the sender has paid' lowered the score (value 1.00).  [E14]
+
+
+INSUFFICIENT EVIDENCE:
+  - No network evidence links this transaction to known suspicious entities.
+
+CONFIDENCE: 0.13 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk 0.13 with 2 corroborating evidence types; a human investigator must make the final decision.  [E11, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R020,"Case ID: C-45E4DF85        Risk Level: LOW
+Transaction ID: TX-01374838   Fused risk: 0.24   Priority: P1
+
+ALERT REASON:
+  Model classifier assigns a very high fraud probability  [E8]
+
+TRANSACTION SUMMARY:
+  ACH transaction TX-01374838 of amount 19812.14 from sender 9096_810A57890 to receiver 112926_810A57840 at 2022-09-09 17:13  [E1, E2, E3, E4, E5, E6]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Transaction amount matches sender's historical average (ratio 1.0) and has zero z‑score  [E17, E18]
+  - Only one transaction by the sender in the last hour and last 10 minutes  [E19, E20]
+  - Transaction occurs at hour 17, a typical business hour  [E21]
+
+NETWORK FINDINGS (observed):
+  - Graph‑based suspicion scores are zero and neither sender nor receiver are flagged or connected to flagged accounts  [E10, E23, E24, E25, E26, E27]
+  - No other accounts share the device or exhibit fan‑in/fan‑out activity within 72 h  [E28, E29, E30]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - ACH transaction type strongly increases risk (SHAP 2.1832)  [E12]
+  - Sender has many distinct receivers, which decreases risk (SHAP -0.7901)  [E13]
+  - Sender has zero prior transactions, increasing risk (SHAP 0.7077)  [E14]
+  - High log amount contributes to risk (SHAP 0.688)  [E15]
+  - First transfer to this beneficiary raises risk (SHAP 0.5531)  [E16]
+
+INFERENCE (reasoning, not fact):
+  - The transaction shows strong model‑based risk signals (high classifier score, ACH type, large amount, new beneficiary) while behavioural and network signals are neutral, resulting in a moderate fused risk  [E8, E12, E14, E15, E16, E9, E10, E11]
+
+INSUFFICIENT EVIDENCE:
+  - Cannot determine the intent or victim impact because no external complaint, account takeover indicators, or post‑transaction outcomes are present
+
+CONFIDENCE: 0.24 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk (0.237) and confidence (0.237) are moderate, and only two evidence types (model, historical) corroborate risk; additional contextual evidence is needed to reach a firm conclusion  [E11, E35, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R007,"TRANSACTION FACTS:
+  Transaction ID: TX-01343474
+  Timestamp: 2022-09-09 13:13:00
+  Amount: 11016.33
+  Sender account: 1776_800581180
+  Receiver account: 531_800652FF0
+  Transaction type: ACH
+  Device ID: DEV_1776_800581180
+
+MODEL SCORES:
+  Fused risk: 19.47%
+  Detection score: 99.26%
+  Behaviour score: 31.21%
+  Network score: 50.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +2.2306)
+  - log_amount: increases risk (SHAP +0.9024)
+  - new_beneficiary: increases risk (SHAP +0.6708)
+  - sender_prior_tx_count: decreases risk (SHAP -0.5822)
+  - tx_count_24h: increases risk (SHAP +0.5736)",,,,,,,
+R033,"TRANSACTION FACTS:
+  Transaction ID: TX-01439594
+  Timestamp: 2022-09-10 03:01:00
+  Amount: 38556.71
+  Sender account: 20_8003FA0B0
+  Receiver account: 1768_800416240
+  Transaction type: ACH
+  Device ID: DEV_20_8003FA0B0
+
+MODEL SCORES:
+  Fused risk: 9.76%
+  Detection score: 98.01%
+  Behaviour score: 2.88%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +1.9454)
+  - sender_prior_tx_count: increases risk (SHAP +0.8924)
+  - sender_distinct_receivers: decreases risk (SHAP -0.7399)
+  - new_beneficiary: increases risk (SHAP +0.5486)
+  - beneficiary_frequency: increases risk (SHAP +0.5058)",,,,,,,
+R031,"Case ID: C-38740947        Risk Level: LOW
+Transaction ID: TX-01374838   Fused risk: 0.24   Priority: P1
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.99.  [E8]
+
+TRANSACTION SUMMARY:
+  ACH of 19,812.14 from 9096_810A57890 to 112926_810A57840 at 2022-09-09 17:13; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E31]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 1.00x the sender's historical average (behaviour anomaly score 0.07).  [E17, E9]
+
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.99; fused risk 0.24 (learned fusion).  [E8, E11]
+  - 'type_ach' raised the score (value 1.00).  [E12]
+  - 'distinct receivers the sender has paid' lowered the score (value 1.00).  [E13]
+  - 'sender's prior transaction count' raised the score (value 0.00).  [E14]
+
+
+INSUFFICIENT EVIDENCE:
+  - No network evidence links this transaction to known suspicious entities.
+
+CONFIDENCE: 0.24 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk 0.24 with 2 corroborating evidence types; a human investigator must make the final decision.  [E11, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R025,"TRANSACTION FACTS:
+  Transaction ID: TX-01489810
+  Timestamp: 2022-09-17 15:28:00
+  Amount: 9490.93
+  Sender account: 11_8001AB0D0
+  Receiver account: 12274_801A461D0
+  Transaction type: ACH
+  Device ID: DEV_11_8001AB0D0
+
+MODEL SCORES:
+  Fused risk: 10.26%
+  Detection score: 98.79%
+  Behaviour score: 21.06%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +1.9131)
+  - log_amount: increases risk (SHAP +0.9392)
+  - tx_count_24h: increases risk (SHAP +0.7968)
+  - beneficiary_frequency: increases risk (SHAP +0.5831)
+  - new_beneficiary: increases risk (SHAP +0.5752)",,,,,,,
+R005,"Case ID: C-8799C84A        Risk Level: LOW
+Transaction ID: TX-01489783   Fused risk: 0.17   Priority: P2
+
+ALERT REASON:
+  High fraud probability from the XGBoost classifier (score 0.99)  [E8]
+
+TRANSACTION SUMMARY:
+  Transaction TX-01489783 of $1589.14 ACH from account 25526_81171BEA0 to account 15_80006F380 at 2022-09-14 13:48  [E1, E2, E3, E4, E5, E6]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount equals sender's historical average (ratio 1.0) and is not anomalous (z‑score 0.0); only one transaction in the past hour and past 10 minutes, occurring at hour 13  [E17, E18, E19, E20, E21]
+
+NETWORK FINDINGS (observed):
+  - Graph analysis shows no suspicious connections: graph score 0, neither sender nor receiver flagged, no flagged accounts within 3 hops, and no shared devices or fan‑in/fan‑out activity  [E10, E23, E24, E25, E26, E27, E28, E29, E30]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - SHAP contributions increase risk: ACH type (+2.1672), first transfer to this beneficiary (+0.549), no prior sender transactions (+0.741), and no prior transfers to this beneficiary (+0.5376); distinct receivers feature decreases risk (‑0.734)  [E12, E13, E14, E15, E16]
+
+INFERENCE (reasoning, not fact):
+  - The very high classifier score combined with several risk‑increasing SHAP features yields a modest fused risk of 0.172, while low behavioural anomaly (0.047) and zero graph suspicion keep overall confidence low  [E8, E11, E12, E13, E15, E16, E9, E10]
+
+INSUFFICIENT EVIDENCE:
+  - No information on beneficiary legitimacy, external watch‑list checks, or recent device/IP changes beyond the provided flags
+
+CONFIDENCE: 0.17 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Given the modest fused risk and limited corroborating signals, additional evidence is needed before any escalation  [E11, E36, E37]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R018,"Case ID: C-3AD1F6D4        Risk Level: LOW
+Transaction ID: TX-01479726   Fused risk: 0.17   Priority: P2
+
+ALERT REASON:
+  The XGBoost model assigns a very high fraud probability to the transaction  [E8]
+
+TRANSACTION SUMMARY:
+  Transaction TX-01479726 of $2625.86 was an ACH transfer from account 15461_8020047D0 to 14_802008CA0 on 2022-09-10 at 19:52 using device DEV_15461_8020047D0  [E1, E2, E3, E4, E5, E6, E7]
+
+BEHAVIOURAL FINDINGS (observed):
+  - The amount equals the sender's historical average (ratio 1.0) with a zero z‑score, and only one transaction occurred in the past hour and 10 minutes; the transaction took place at hour 19  [E17, E18, E19, E20, E21]
+
+NETWORK FINDINGS (observed):
+  - Graph‑based signals show no suspicion: graph score is 0, neither sender nor receiver is flagged, and there are no flagged accounts within three hops or shared devices  [E10, E23, E24, E25, E26, E27, E28, E29, E30]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - SHAP values indicate that the ACH type, zero prior transactions for the sender, first transfer to this beneficiary, and no prior transfers to this beneficiary increase risk, while the sender's distinct receiver count slightly decreases risk  [E12, E13, E14, E15, E16]
+
+INFERENCE (reasoning, not fact):
+  - The classifier strongly flags the transaction, but behavioural and graph indicators are neutral; the deterministic fusion therefore yields a modest fused risk of 0.172 with matching confidence  [E8, E9, E10, E11, E36]
+
+INSUFFICIENT EVIDENCE:
+  - Cannot determine the intent behind the transaction or confirm whether the sender’s device or IP history beyond the current snapshot shows any anomalous patterns
+
+CONFIDENCE: 0.17 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fusion produced a low fused risk (0.172) despite a high classifier score, and only two evidence types (model and historical) corroborate risk, so additional evidence is needed to clarify the situation  [E11, E35, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R034,"Case ID: C-2316C571        Risk Level: LOW
+Transaction ID: TX-01448737   Fused risk: 0.21   Priority: P2
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.99.  [E8]
+
+TRANSACTION SUMMARY:
+  ACH of 4,238.15 from 18270_816067930 to 11_81606F0A0 at 2022-09-10 06:50; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E31]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 1.00x the sender's historical average (behaviour anomaly score 0.03).  [E17, E9]
+
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.99; fused risk 0.21 (learned fusion).  [E8, E11]
+  - 'type_ach' raised the score (value 1.00).  [E12]
+  - 'sender's prior transaction count' raised the score (value 0.00).  [E13]
+  - 'distinct receivers the sender has paid' lowered the score (value 1.00).  [E14]
+
+
+INSUFFICIENT EVIDENCE:
+  - No network evidence links this transaction to known suspicious entities.
+
+CONFIDENCE: 0.21 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk 0.21 with 2 corroborating evidence types; a human investigator must make the final decision.  [E11, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R008,"TRANSACTION FACTS:
+  Transaction ID: TX-01467618
+  Timestamp: 2022-09-10 14:48:00
+  Amount: 825.77
+  Sender account: 70_10042B660
+  Receiver account: 15194_8127BFE30
+  Transaction type: Cheque
+  Device ID: DEV_70_10042B660
+
+MODEL SCORES:
+  Fused risk: 29.83%
+  Detection score: 99.12%
+  Behaviour score: 0.66%
+  Network score: 50.00%
+
+TOP SHAP FEATURES:
+  - sender_distinct_receivers: increases risk (SHAP +2.4559)
+  - tx_count_1h: increases risk (SHAP +0.9899)
+  - new_beneficiary: increases risk (SHAP +0.6524)
+  - beneficiary_frequency: increases risk (SHAP +0.4875)
+  - type_ach: decreases risk (SHAP -0.3834)",,,,,,,
+R023,"Case ID: C-A9669C2B        Risk Level: LOW
+Transaction ID: TX-01448737   Fused risk: 0.21   Priority: P2
+
+ALERT REASON:
+  Model classifier assigns a high fraud probability of 0.992  [E8]
+
+TRANSACTION SUMMARY:
+  ACH transaction TX-01448737 of amount 4238.15 from account 18270_816067930 to 11_81606F0A0 at 2022-09-10 06:50 using device DEV_18270_816067930  [E1, E2, E3, E4, E5, E6, E7]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount equals sender's historical average (ratio 1.0, z‑score 0.0) and only one transaction in the past hour and 10 minutes, occurring at hour 6  [E17, E18, E19, E20, E21]
+
+NETWORK FINDINGS (observed):
+  - Graph analysis shows no flagged entities within 3 hops, no shared devices, and no recent fan‑in or fan‑out activity  [E23, E24, E25, E26, E27, E28, E29, E30]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - SHAP values indicate ACH type, zero prior sender transactions, and first transfer to this beneficiary increase risk, while a high count of distinct receivers decreases risk  [E12, E13, E14, E15, E16]
+
+INFERENCE (reasoning, not fact):
+  - The deterministic fusion yields a moderate fused risk of 0.21 with equal confidence, driven mainly by the classifier score and limited corroborating evidence  [E11, E35, E36, E37]
+
+INSUFFICIENT EVIDENCE:
+  - No information on beneficiary reputation or external risk indicators beyond first‑time transfer (E31)
+
+CONFIDENCE: 0.21 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Given the moderate fused risk (0.21) and low confidence, and only two evidence types (model and historical) corroborating, additional evidence is needed before a definitive decision  [E11, E35, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R014,"TRANSACTION FACTS:
+  Transaction ID: TX-01486589
+  Timestamp: 2022-09-10 22:42:00
+  Amount: 986.58
+  Sender account: 115_815D50910
+  Receiver account: 258799_815D50C70
+  Transaction type: ACH
+  Device ID: DEV_115_815D50910
+
+MODEL SCORES:
+  Fused risk: 10.96%
+  Detection score: 98.72%
+  Behaviour score: 15.72%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +2.2205)
+  - sender_prior_tx_count: increases risk (SHAP +0.7597)
+  - sender_distinct_receivers: decreases risk (SHAP -0.6633)
+  - new_beneficiary: increases risk (SHAP +0.5690)
+  - beneficiary_frequency: increases risk (SHAP +0.5181)",,,,,,,
+R019,"Case ID: C-0464B46A        Risk Level: LOW
+Transaction ID: TX-01317355   Fused risk: 0.28   Priority: P1
+
+ALERT REASON:
+  The transaction shows a high fraud probability (classifier score 0.988) combined with a strong graph suspicion score (0.745).  [E8, E10]
+
+TRANSACTION SUMMARY:
+  Transaction TX-01317355 of amount 28266.67 was a Cheque from account 70_10042B6F0 to account 110682_80BCA0DD0 at 2022-09-09 09:53 using device DEV_70_10042B6F0.  [E1, E2, E5, E6, E3, E4, E7]
+
+BEHAVIOURAL FINDINGS (observed):
+  - The amount is only 5% of the sender's historical average (ratio 0.05) and its z‑score is -0.154, indicating it is unusually low for this account.  [E17, E18]
+  - Only one transaction was observed from the sender in the past hour and in the past 10 minutes, showing no burst activity.  [E19, E20]
+  - Behavioural anomaly score is 0.0, suggesting no deviation from the sender's typical pattern.  [E9]
+
+NETWORK FINDINGS (observed):
+  - The sender has been flagged in a prior case and is connected to 41 flagged accounts within two hops, while the receiver is not flagged but has one flagged account within two hops.  [E24, E26, E25, E23]
+  - Graph analysis detected a fan‑out pattern: the sender has 15 distinct receivers in the last 72 h, matching an AML typology.  [E30, E31]
+  - No other accounts have used the same device, and the receiver has no recent fan‑in activity.  [E28, E29]
+
+MODEL EXPLANATION (predictions + SHAP):
+  - SHAP values show that the sender's high number of distinct receivers (41) and first transfer to this beneficiary increase risk (2.1722 and 0.8356 respectively).  [E12, E14]
+  - The single transaction in the last hour also raises risk (shap 0.9147).  [E13]
+  - Lack of prior transfers to this beneficiary adds risk (shap 0.5585).  [E15]
+  - The transaction type (ACH) slightly decreases risk (shap -0.532).  [E16]
+
+INFERENCE (reasoning, not fact):
+  - Multiple independent signals (model score, graph score, historical flags) corroborate elevated risk, consistent with the fused risk of 0.284 and confidence of 0.284.  [E11, E36, E37]
+
+INSUFFICIENT EVIDENCE:
+  - No evidence about the ultimate beneficiary or intended use of the funds, so motive cannot be assessed.
+
+CONFIDENCE: 0.28 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: escalate_for_review  -  Given the fused risk of 0.284 with equal confidence, and three corroborating evidence types (model, graph, historical), a human investigator should review the case.  [E11, E36, E37]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R026,"Case ID: C-9AC99403        Risk Level: LOW
+Transaction ID: TX-01489783   Fused risk: 0.17   Priority: P2
+
+ALERT REASON:
+  Flagged because the fraud classifier scored it 0.99.  [E8]
+
+TRANSACTION SUMMARY:
+  ACH of 1,589.14 from 25526_81171BEA0 to 15_80006F380 at 2022-09-14 13:48; first transfer to this beneficiary.  [E2, E3, E4, E5, E6, E31]
+
+BEHAVIOURAL FINDINGS (observed):
+  - Amount is 1.00x the sender's historical average (behaviour anomaly score 0.05).  [E17, E9]
+
+
+MODEL EXPLANATION (predictions + SHAP):
+  - Fraud classifier probability 0.99; fused risk 0.17 (learned fusion).  [E8, E11]
+  - 'type_ach' raised the score (value 1.00).  [E12]
+  - 'sender's prior transaction count' raised the score (value 0.00).  [E13]
+  - 'distinct receivers the sender has paid' lowered the score (value 1.00).  [E14]
+
+
+INSUFFICIENT EVIDENCE:
+  - No network evidence links this transaction to known suspicious entities.
+
+CONFIDENCE: 0.17 (computed by evidence fusion, not the LLM)
+RECOMMENDED ACTION: request_more_evidence  -  Fused risk 0.17 with 2 corroborating evidence types; a human investigator must make the final decision.  [E11, E36]
+REVIEWER STATUS: Pending   (the system never blocks or closes on its own)",,,,,,,
+R013,"TRANSACTION FACTS:
+  Transaction ID: TX-01427873
+  Timestamp: 2022-09-09 23:57:00
+  Amount: 3666.44
+  Sender account: 241535_812C95CA0
+  Receiver account: 110856_812C95210
+  Transaction type: ACH
+  Device ID: DEV_241535_812C95CA0
+
+MODEL SCORES:
+  Fused risk: 14.39%
+  Detection score: 99.13%
+  Behaviour score: 18.68%
+  Network score: 0.00%
+
+TOP SHAP FEATURES:
+  - type_ach: increases risk (SHAP +2.1266)
+  - sender_prior_tx_count: increases risk (SHAP +0.8665)
+  - new_beneficiary: increases risk (SHAP +0.5715)
+  - sender_distinct_receivers: decreases risk (SHAP -0.5181)
+  - beneficiary_frequency: increases risk (SHAP +0.5018)",,,,,,,
